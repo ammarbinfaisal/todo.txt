@@ -9,11 +9,13 @@
 - Reworked todo rows to be denser and swipe-enabled (right = complete, left = delete).
 - Added a left-side sliding drawer for viewing/editing full todo details; tapping outside closes and discards changes.
 - Implemented delete undo via a small bottom-left toast.
+- Added an app icon (SVG) and set metadata icons to reduce favicon 404s in production.
 
 ## Files changed
 - `app/globals.css` - Added CSS variable theme palettes (light/beige/dark).
 - `app/layout.tsx` - Switched body colors to CSS variables and set `data-theme`.
 - `app/page.tsx` - Simplified container so `TodoApp` owns the layout.
+- `public/icon.svg` - Added a minimal icon used by metadata.
 - `stores/theme-store.ts` - Added `beige` theme and `cycle()`; apply theme via `data-theme`.
 - `stores/todo-store.ts` - Added undo state/actions and todo.txt export helper.
 - `components/AppHeader.tsx` - Removed add form; updated to new theme + palette variables.
@@ -39,4 +41,3 @@
 - Add richer drawer content (projects/contexts/meta editing, due/tag UI) and import workflow.
 - Replace the simple pointer swipe with `@use-gesture/react` + `react-spring` for better physics and velocity-based thresholds.
 - Add long-press / multi-select and additional swipe actions as described in `INSTRUCTIONS.md`.
-

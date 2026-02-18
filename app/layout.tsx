@@ -4,7 +4,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "TodoTXT",
-  description: "Offline-first todo.txt PWA"
+  description: "Offline-first todo.txt PWA",
+  icons: {
+    icon: "/icon.svg"
+  }
 };
 
 export default function RootLayout({
