@@ -14,7 +14,6 @@ export function TodoApp() {
   const toggleTheme = useThemeStore((s) => s.toggle);
   const hydrateTheme = useThemeStore((s) => s.hydrateFromStorage);
 
-  const todos = useTodoStore((s) => selectFilteredTodos(s));
   const allTodos = useTodoStore((s) => s.todos);
   const loading = useTodoStore((s) => s.loading);
   const error = useTodoStore((s) => s.error);
@@ -40,6 +39,11 @@ export function TodoApp() {
     const active = allTodos.length - done;
     return { active, done, total: allTodos.length };
   }, [allTodos]);
+
+  const todos = useMemo(
+    () => selectFilteredTodos({ todos: allTodos, filters }),
+    [allTodos, filters]
+  );
 
   return (
     <>
