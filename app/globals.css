@@ -1,2 +1,52 @@
 @import "tailwindcss";
 
+:root {
+  color-scheme: light;
+  --bg: #fbfbf8;
+  --fg: #111214;
+  --muted: #555b63;
+  --muted-2: #6b7280;
+  --border: #e6e7ea;
+  --surface: #ffffff;
+  --surface-2: #f4f5f7;
+  --chip: #eff0f3;
+  --chip-fg: #2a2f36;
+  --primary: #111214;
+  --primary-fg: #ffffff;
+  --danger: #b91c1c;
+  --danger-fg: #ffffff;
+}
+
+html[data-theme="beige"] {
+  color-scheme: light;
+  --bg: #f4efe4;
+  --fg: #1c1a16;
+  --muted: #5f5a50;
+  --muted-2: #736b5f;
+  --border: #e0d5c4;
+  --surface: #fbf7ef;
+  --surface-2: #f1eadc;
+  --chip: #efe5d4;
+  --chip-fg: #2b261f;
+  --primary: #1c1a16;
+  --primary-fg: #fbf7ef;
+  --danger: #b91c1c;
+  --danger-fg: #ffffff;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1113;
+  --fg: #f5f6f7;
+  --muted: #a0a6ad;
+  --muted-2: #8b929b;
+  --border: #272c33;
+  --surface: #14171a;
+  --surface-2: #1a1f24;
+  --chip: #1e242b;
+  --chip-fg: #d2d6db;
+  --primary: #f5f6f7;
+  --primary-fg: #0f1113;
+  --danger: #ef4444;
+  --danger-fg: #0f1113;
+}

@@ -19,12 +19,16 @@ interface TodoState {
   loading: boolean;
   error?: string;
   filters: TodoFilters;
+  undo?: { todo: Todo; index: number; expiresAt: number };
 
   load: () => Promise<void>;
   add: (line: string) => Promise<void>;
   updateLine: (id: string, line: string) => Promise<void>;
   toggleCompleted: (id: string) => Promise<void>;
-  remove: (id: string) => Promise<void>;
+  removeWithUndo: (id: string) => Promise<void>;
+  undoRemove: () => Promise<void>;
+  clearUndo: () => void;
+  exportTodoTxt: () => string;
   setStatusFilter: (status: StatusFilter) => void;
   setPriorityFilter: (priority?: TodoPriority) => void;
 }
@@ -78,6 +82,7 @@ export const useTodoStore = create<TodoState>()(
     loading: false,
     error: undefined,
     filters: { status: "all" },
+    undo: undefined,
 
     load: async () => {
       set((state) => {
@@ -99,6 +104,8 @@ export const useTodoStore = create<TodoState>()(
         });
       }
     },
+
+    exportTodoTxt: () => get().todos.map((t) => t.line).join("\n"),
 
     add: async (line) => {
       const trimmed = line.trim();
@@ -150,10 +157,38 @@ export const useTodoStore = create<TodoState>()(
       });
     },
 
-    remove: async (id) => {
+    clearUndo: () => {
+      set((state) => {
+        state.undo = undefined;
+      });
+    },
+
+    removeWithUndo: async (id) => {
+      const index = get().todos.findIndex((t) => t.id === id);
+      const todo = get().todos[index];
+      if (!todo) return;
+
       await dbDeleteTodo(id);
+      const expiresAt = Date.now() + 5000;
       set((state) => {
         state.todos = state.todos.filter((t) => t.id !== id);
+        state.undo = { todo, index, expiresAt };
+      });
+    },
+
+    undoRemove: async () => {
+      const undo = get().undo;
+      if (!undo) return;
+      if (Date.now() > undo.expiresAt) {
+        get().clearUndo();
+        return;
+      }
+
+      await dbPutTodo(undo.todo);
+      set((state) => {
+        const idx = Math.max(0, Math.min(undo.index, state.todos.length));
+        state.todos.splice(idx, 0, undo.todo);
+        state.undo = undefined;
       });
     },
 
@@ -180,4 +215,3 @@ export function selectFilteredTodos(state: Pick<TodoState, "todos" | "filters">)
     return true;
   });
 }
-

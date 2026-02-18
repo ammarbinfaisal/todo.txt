@@ -7,22 +7,26 @@ type Status = "all" | "active" | "done";
 function Chip({
   active,
   label,
+  ariaLabel,
   onClick
 }: {
   active: boolean;
   label: string;
+  ariaLabel: string;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-label={ariaLabel}
+      title={ariaLabel}
       className={[
         "h-8 rounded-full px-3 text-xs font-medium",
         "border",
         active
-          ? "border-neutral-900 bg-neutral-900 text-white dark:border-neutral-50 dark:bg-neutral-50 dark:text-neutral-950"
-          : "border-neutral-200 bg-white text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200"
+          ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-fg)]"
+          : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]"
       ].join(" ")}
     >
       {label}
@@ -45,19 +49,40 @@ export function FilterChips({
 
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
-      <Chip active={status === "all"} label="All" onClick={() => onStatusChange("all")} />
+      <Chip
+        active={status === "all"}
+        label="≡"
+        ariaLabel="Show all"
+        onClick={() => onStatusChange("all")}
+      />
       <Chip
         active={status === "active"}
-        label="Active"
+        label="○"
+        ariaLabel="Show active"
         onClick={() => onStatusChange("active")}
       />
-      <Chip active={status === "done"} label="Done" onClick={() => onStatusChange("done")} />
-      <div className="w-px self-stretch bg-neutral-200 dark:bg-neutral-800" />
-      <Chip active={!priority} label="Any" onClick={() => onPriorityChange(undefined)} />
+      <Chip
+        active={status === "done"}
+        label="✓"
+        ariaLabel="Show done"
+        onClick={() => onStatusChange("done")}
+      />
+      <div className="w-px self-stretch bg-[var(--border)]" />
+      <Chip
+        active={!priority}
+        label="•"
+        ariaLabel="Any priority"
+        onClick={() => onPriorityChange(undefined)}
+      />
       {priorities.map((p) => (
-        <Chip key={p} active={priority === p} label={`(${p})`} onClick={() => onPriorityChange(p)} />
+        <Chip
+          key={p}
+          active={priority === p}
+          label={p}
+          ariaLabel={`Priority ${p}`}
+          onClick={() => onPriorityChange(p)}
+        />
       ))}
     </div>
   );
 }
-

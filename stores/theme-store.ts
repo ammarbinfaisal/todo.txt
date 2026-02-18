@@ -2,24 +2,24 @@
 
 import { create } from "zustand";
 
-type Theme = "light" | "dark";
+export type Theme = "light" | "beige" | "dark";
 
 interface ThemeState {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  toggle: () => void;
+  cycle: () => void;
   hydrateFromStorage: () => void;
 }
 
 function applyTheme(theme: Theme) {
   if (typeof document === "undefined") return;
-  document.documentElement.classList.toggle("dark", theme === "dark");
+  document.documentElement.dataset.theme = theme;
 }
 
 function readThemeFromStorage(): Theme | null {
   if (typeof window === "undefined") return null;
   const value = window.localStorage.getItem("todotxt-theme");
-  if (value === "dark" || value === "light") return value;
+  if (value === "dark" || value === "light" || value === "beige") return value;
   return null;
 }
 
@@ -35,8 +35,10 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     applyTheme(theme);
     writeThemeToStorage(theme);
   },
-  toggle: () => {
-    const next: Theme = get().theme === "dark" ? "light" : "dark";
+  cycle: () => {
+    const current = get().theme;
+    const next: Theme =
+      current === "light" ? "beige" : current === "beige" ? "dark" : "light";
     get().setTheme(next);
   },
   hydrateFromStorage: () => {
@@ -45,4 +47,3 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     else applyTheme(get().theme);
   }
 }));
-
