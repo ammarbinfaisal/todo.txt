@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { Todo } from "@/types/todo";
+import { useEscapeKey } from "@/hooks/useEscapeKey";
 
 export function EditSheet({
   open,
@@ -17,23 +18,31 @@ export function EditSheet({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const prevTodoId = useRef<string | undefined>(undefined);
 
-  useEffect(() => {
-    if (open && todo) {
-      setDraft(todo.line);
-      requestAnimationFrame(() => textareaRef.current?.focus());
-    }
-  }, [open, todo]);
+  // Sync draft from todo when the sheet opens for a new todo
+  if (open && todo && todo.id !== prevTodoId.current) {
+    setDraft(todo.line);
+    prevTodoId.current = todo.id;
+  } else if (!open && prevTodoId.current !== undefined) {
+    prevTodoId.current = undefined;
+  }
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+  // Auto-focus textarea via ref callback
+  const textareaRef = useCallback(
+    (node: HTMLTextAreaElement | null) => {
+      if (node && open) {
+        requestAnimationFrame(() => node.focus());
+      }
+    },
+    [open]
+  );
+
+  const handleClose = useCallback(() => {
+    if (open) onClose();
   }, [open, onClose]);
+
+  useEscapeKey(handleClose);
 
   const chips = useMemo(() => {
     if (!todo) return [];

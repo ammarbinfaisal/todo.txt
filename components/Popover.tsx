@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, type CSSProperties, type ReactNode, type RefObject } from "react";
+import type { CSSProperties, ReactNode, RefObject } from "react";
 import { createPortal } from "react-dom";
+import { useEscapeKey } from "@/hooks/useEscapeKey";
 
 export function Popover({
   open,
@@ -18,14 +19,7 @@ export function Popover({
   children: ReactNode;
   className?: string;
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  useEscapeKey(onClose);
 
   if (!open) return null;
 

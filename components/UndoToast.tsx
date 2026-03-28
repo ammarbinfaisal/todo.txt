@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { useTodoStore } from "@/stores/todo-store";
 
@@ -15,23 +15,37 @@ export function UndoToast() {
   const clearUndo = useTodoStore((s) => s.clearUndo);
 
   const [now, setNow] = useState(() => Date.now());
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trackedUndoId = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!undo) return;
-    const interval = window.setInterval(() => setNow(Date.now()), 250);
-    return () => window.clearInterval(interval);
-  }, [undo]);
+  // Manage timers by comparing current undo to previously tracked undo
+  // This replaces two useEffects with synchronous render-time logic
+  const undoId = undo?.todo.id ?? null;
 
-  const remainingMs = useMemo(() => {
-    if (!undo) return 0;
-    return Math.max(0, undo.expiresAt - now);
-  }, [undo, now]);
+  if (undoId !== trackedUndoId.current) {
+    // Clean up previous timers
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
 
-  useEffect(() => {
-    if (!undo) return;
-    const timeout = window.setTimeout(() => clearUndo(), Math.max(0, undo.expiresAt - Date.now()));
-    return () => window.clearTimeout(timeout);
-  }, [undo, clearUndo]);
+    trackedUndoId.current = undoId;
+
+    if (undo) {
+      // Start countdown interval
+      intervalRef.current = setInterval(() => setNow(Date.now()), 250);
+      // Schedule auto-clear
+      const remaining = Math.max(0, undo.expiresAt - Date.now());
+      timeoutRef.current = setTimeout(() => clearUndo(), remaining);
+    }
+  }
+
+  const remainingMs = undo ? Math.max(0, undo.expiresAt - now) : 0;
 
   if (!undo) return null;
 
@@ -39,7 +53,9 @@ export function UndoToast() {
     <div className="fixed bottom-16 left-3 z-50">
       <div className="flex items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm">
         <span className="text-[var(--muted)]">Deleted</span>
-        <span className="text-[11px] text-[var(--muted-2)]">{formatMs(remainingMs)}</span>
+        <span className="text-[11px] text-[var(--muted-2)]">
+          {formatMs(remainingMs)}
+        </span>
         <button
           type="button"
           onClick={() => void undoRemove()}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useEscapeKey } from "@/hooks/useEscapeKey";
 import { tick } from "@/lib/haptics";
 
 export type ArcAction = "complete" | "edit" | "tag" | "delete";
@@ -14,9 +15,8 @@ const ITEMS: { action: ArcAction; icon: string; label: string }[] = [
 ];
 
 const RADIUS = 56;
-// Spread icons in a 140° arc centered below the tap point
-const ARC_START = -160; // degrees (left of center)
-const ARC_END = -20; // degrees (right of center)
+const ARC_START = -160;
+const ARC_END = -20;
 
 function getIconPosition(index: number, count: number) {
   const angleDeg =
@@ -42,29 +42,26 @@ export function ArcMenu({
   onClose: () => void;
 }) {
   const [revealed, setRevealed] = useState(false);
+  const prevOpen = useRef(false);
 
-  useEffect(() => {
-    if (open) {
-      // Stagger reveal on next frame
-      requestAnimationFrame(() => setRevealed(true));
-      tick();
-    } else {
-      setRevealed(false);
-    }
-  }, [open]);
+  // Derive revealed state from open prop without useEffect
+  if (open && !prevOpen.current) {
+    // Just opened — schedule reveal on next frame
+    requestAnimationFrame(() => setRevealed(true));
+    tick();
+  } else if (!open && prevOpen.current) {
+    setRevealed(false);
+  }
+  prevOpen.current = open;
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+  const handleClose = useCallback(() => {
+    if (open) onClose();
   }, [open, onClose]);
+
+  useEscapeKey(handleClose);
 
   if (!open) return null;
 
-  // Clamp origin so the arc stays on screen
   const vw = typeof window !== "undefined" ? window.innerWidth : 400;
   const vh = typeof window !== "undefined" ? window.innerHeight : 800;
   const ox = Math.max(RADIUS + 8, Math.min(position.x, vw - RADIUS - 8));

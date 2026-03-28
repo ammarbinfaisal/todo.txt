@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AppHeader } from "@/components/AppHeader";
 import { ArcMenu, type ArcAction } from "@/components/ArcMenu";
@@ -13,6 +13,7 @@ import { TagPicker } from "@/components/TagPicker";
 import { TodoItem } from "@/components/TodoItem";
 import { UndoToast } from "@/components/UndoToast";
 import { useBatchSelect } from "@/hooks/useBatchSelect";
+import { useMountEffect } from "@/hooks/useMountEffect";
 import { usePopover } from "@/hooks/usePopover";
 import { bump, heavy } from "@/lib/haptics";
 import { useProjectStore } from "@/stores/project-store";
@@ -72,15 +73,12 @@ export function TodoApp() {
   // Batch select
   const batch = useBatchSelect();
 
-  // Hydrate
-  useEffect(() => {
+  // Hydrate on mount
+  useMountEffect(() => {
     hydrateTheme();
-  }, [hydrateTheme]);
-
-  useEffect(() => {
     void load();
     void loadProjects();
-  }, [load, loadProjects]);
+  });
 
   const counts = useMemo(() => {
     const done = allTodos.filter((t) => t.completed).length;

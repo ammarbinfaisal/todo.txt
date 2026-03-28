@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useMountEffect } from "@/hooks/useMountEffect";
 import { useProjectStore } from "@/stores/project-store";
 
 export function BottomBar({
@@ -22,7 +23,7 @@ export function BottomBar({
   const configs = useProjectStore((s) => s.configs);
   const [ghostAccepted, setGhostAccepted] = useState(false);
 
-  useEffect(() => {
+  useMountEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -31,7 +32,7 @@ export function BottomBar({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  });
 
   // Find ghost autocomplete for the last +word being typed
   const ghost = useMemo(() => {

@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Popover } from "@/components/Popover";
-import { usePopover } from "@/hooks/usePopover";
 import { bump } from "@/lib/haptics";
 import type { CSSProperties, RefObject } from "react";
 
@@ -24,17 +23,23 @@ export function QuickEditPopover({
   style: CSSProperties;
 }) {
   const [value, setValue] = useState(initialText);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const prevText = useRef(initialText);
 
-  useEffect(() => {
+  // Sync value when initialText changes (new todo selected)
+  if (initialText !== prevText.current) {
     setValue(initialText);
-  }, [initialText]);
+    prevText.current = initialText;
+  }
 
-  useEffect(() => {
-    if (open) {
-      requestAnimationFrame(() => inputRef.current?.focus());
-    }
-  }, [open]);
+  // Auto-focus via ref callback
+  const inputRef = useCallback(
+    (node: HTMLInputElement | null) => {
+      if (node && open) {
+        requestAnimationFrame(() => node.focus());
+      }
+    },
+    [open]
+  );
 
   return (
     <Popover
