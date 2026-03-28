@@ -45,9 +45,13 @@ export function ArcMenu({
   const [revealed, setRevealed] = useState(false);
   const prevOpen = useRef(false);
 
+  // Track open transitions — schedule side effects via microtask to avoid
+  // running them during render (React rules)
   if (open && !prevOpen.current) {
-    requestAnimationFrame(() => setRevealed(true));
-    tick();
+    queueMicrotask(() => {
+      setRevealed(true);
+      tick();
+    });
   } else if (!open && prevOpen.current) {
     setRevealed(false);
   }

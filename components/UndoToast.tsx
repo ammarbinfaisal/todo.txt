@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
+import { useMountEffect } from "@/hooks/useMountEffect";
 import { useTodoStore } from "@/stores/todo-store";
 
 function formatMs(ms: number) {
@@ -19,8 +20,15 @@ export function UndoToast() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trackedUndoId = useRef<string | null>(null);
 
+  // Clean up timers on unmount
+  useMountEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  });
+
   // Manage timers by comparing current undo to previously tracked undo
-  // This replaces two useEffects with synchronous render-time logic
   const undoId = undo?.todo.id ?? null;
 
   if (undoId !== trackedUndoId.current) {

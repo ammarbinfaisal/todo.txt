@@ -38,6 +38,7 @@ export function TodoItem({
   onEditSave: () => void;
   onEditCancel: () => void;
 }) {
+  const configs = useProjectStore((s) => s.configs);
   const getConfig = useProjectStore((s) => s.getConfig);
 
   const swipe = useSwipeRow({

@@ -31,7 +31,10 @@ export function ProjectChipEditor({
   popoverRef: RefObject<HTMLDivElement | null>;
   style: CSSProperties;
 }) {
-  const config = useProjectStore((s) => s.getConfig)(name);
+  // Subscribe to configs so re-renders happen when config changes
+  const configs = useProjectStore((s) => s.configs);
+  const getConfig = useProjectStore((s) => s.getConfig);
+  const config = getConfig(name);
   const upsert = useProjectStore((s) => s.upsert);
   const [editName, setEditName] = useState(name);
 

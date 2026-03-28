@@ -10,7 +10,9 @@ export function ProjectChip({
   name: string;
   onEdit: (e: MouseEvent) => void;
 }) {
-  const config = useProjectStore((s) => s.getConfig)(name);
+  const configs = useProjectStore((s) => s.configs);
+  const getConfig = useProjectStore((s) => s.getConfig);
+  const config = getConfig(name);
 
   return (
     <button
