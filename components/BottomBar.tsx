@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Copy, Download, Plus } from "lucide-react";
+import { Plus, Undo2, Redo2 } from "lucide-react";
 import { useMountEffect } from "@/hooks/useMountEffect";
 import { useProjectStore } from "@/stores/project-store";
 
@@ -9,18 +9,31 @@ export function BottomBar({
   input,
   onInputChange,
   onAdd,
-  onCopyAll,
-  onDownloadAll,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
+  undoLabel,
+  redoLabel,
   hidden,
 }: {
   input: string;
   onInputChange: (value: string) => void;
   onAdd: () => Promise<void>;
-  onCopyAll: () => Promise<void>;
-  onDownloadAll: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  undoLabel?: string;
+  redoLabel?: string;
   hidden?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const onUndoRef = useRef(onUndo);
+  const onRedoRef = useRef(onRedo);
+  onUndoRef.current = onUndo;
+  onRedoRef.current = onRedo;
+
   const configs = useProjectStore((s) => s.configs);
   const [ghostAccepted, setGhostAccepted] = useState(false);
 
@@ -30,12 +43,19 @@ export function BottomBar({
         e.preventDefault();
         inputRef.current?.focus();
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        onUndoRef.current();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && e.shiftKey) {
+        e.preventDefault();
+        onRedoRef.current();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   });
 
-  // Find ghost autocomplete for the last +word being typed
   const ghost = useMemo(() => {
     const match = input.match(/\+(\S*)$/);
     if (!match) return "";
@@ -56,7 +76,6 @@ export function BottomBar({
         className="flex items-center gap-1.5 md:gap-2"
         onSubmit={async (e) => {
           e.preventDefault();
-          // Double-enter: first accept ghost, then submit
           if (ghost && !ghostAccepted) {
             onInputChange(input + ghost);
             setGhostAccepted(true);
@@ -68,21 +87,23 @@ export function BottomBar({
       >
         <button
           type="button"
-          onClick={() => void onCopyAll()}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)]"
-          aria-label="Copy all todos"
-          title="Copy all"
+          onClick={onUndo}
+          disabled={!canUndo}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)] disabled:opacity-30"
+          aria-label={undoLabel ?? "Undo"}
+          title={undoLabel ?? "Undo"}
         >
-          <Copy size={16} />
+          <Undo2 size={16} />
         </button>
         <button
           type="button"
-          onClick={onDownloadAll}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)]"
-          aria-label="Download todo.txt"
-          title="Export"
+          onClick={onRedo}
+          disabled={!canRedo}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)] disabled:opacity-30"
+          aria-label={redoLabel ?? "Redo"}
+          title={redoLabel ?? "Redo"}
         >
-          <Download size={16} />
+          <Redo2 size={16} />
         </button>
 
         <div className="relative min-w-0 flex-1">

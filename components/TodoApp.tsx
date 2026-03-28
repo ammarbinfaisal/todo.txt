@@ -10,11 +10,17 @@ import { EditSheet } from "@/components/EditSheet";
 import { ProjectChipEditor, useProjectChipEditor } from "@/components/ProjectChipEditor";
 import { TagPicker } from "@/components/TagPicker";
 import { TodoItem } from "@/components/TodoItem";
-import { UndoToast } from "@/components/UndoToast";
 import { useBatchSelect } from "@/hooks/useBatchSelect";
 import { useMountEffect } from "@/hooks/useMountEffect";
 import { usePopover } from "@/hooks/usePopover";
 import { bump, heavy } from "@/lib/haptics";
+import {
+  useHistoryStore,
+  selectCanUndo,
+  selectCanRedo,
+  selectUndoLabel,
+  selectRedoLabel,
+} from "@/stores/history-store";
 import { useProjectStore } from "@/stores/project-store";
 import { useThemeStore } from "@/stores/theme-store";
 import { selectFilteredTodos, useTodoStore } from "@/stores/todo-store";
@@ -36,13 +42,22 @@ export function TodoApp() {
   const add = useTodoStore((s) => s.add);
   const toggleCompleted = useTodoStore((s) => s.toggleCompleted);
   const updateLine = useTodoStore((s) => s.updateLine);
-  const removeWithUndo = useTodoStore((s) => s.removeWithUndo);
+  const remove = useTodoStore((s) => s.remove);
   const exportTodoTxt = useTodoStore((s) => s.exportTodoTxt);
   const setStatusFilter = useTodoStore((s) => s.setStatusFilter);
   const setPriorityFilter = useTodoStore((s) => s.setPriorityFilter);
   const toggleProject = useTodoStore((s) => s.toggleProject);
   const bulkComplete = useTodoStore((s) => s.bulkComplete);
   const bulkDelete = useTodoStore((s) => s.bulkDelete);
+  const performUndo = useTodoStore((s) => s.performUndo);
+  const performRedo = useTodoStore((s) => s.performRedo);
+
+  // History
+  const loadHistory = useHistoryStore((s) => s.load);
+  const canUndo = useHistoryStore(selectCanUndo);
+  const canRedo = useHistoryStore(selectCanRedo);
+  const undoLabel = useHistoryStore(selectUndoLabel);
+  const redoLabel = useHistoryStore(selectRedoLabel);
 
   // Projects
   const loadProjects = useProjectStore((s) => s.load);
@@ -76,6 +91,7 @@ export function TodoApp() {
     hydrateTheme();
     void load();
     void loadProjects();
+    void loadHistory();
   });
 
   const counts = useMemo(() => {
@@ -114,10 +130,9 @@ export function TodoApp() {
         break;
       case "delete":
         heavy();
-        void removeWithUndo(todoId);
+        void remove(todoId);
         break;
       case "edit": {
-        // Start inline edit
         const todo = allTodos.find((t) => t.id === todoId);
         if (todo) {
           setEditingTodoId(todoId);
@@ -155,6 +170,24 @@ export function TodoApp() {
         filters={filters}
         onStatusChange={setStatusFilter}
         onPriorityChange={setPriorityFilter}
+        onCopyAll={async () => {
+          const text = exportTodoTxt().trim();
+          await navigator.clipboard.writeText(text.length ? `${text}\n` : "");
+        }}
+        onDownloadAll={() => {
+          const text = exportTodoTxt();
+          const blob = new Blob([text.length ? `${text}\n` : ""], {
+            type: "text/plain;charset=utf-8",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "todo.txt";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        }}
       />
 
       <section className="relative flex-1 overflow-y-auto">
@@ -257,7 +290,7 @@ export function TodoApp() {
         onClose={() => setEditSheetTodoId(null)}
       />
 
-      {/* Batch Select Bar */}
+      {/* Batch Select Bar or Bottom Bar */}
       {batch.selectMode ? (
         <BatchBar
           count={batch.count}
@@ -292,30 +325,14 @@ export function TodoApp() {
             await add(value);
             setInput("");
           }}
-          onCopyAll={async () => {
-            const text = exportTodoTxt().trim();
-            await navigator.clipboard.writeText(
-              text.length ? `${text}\n` : ""
-            );
-          }}
-          onDownloadAll={() => {
-            const text = exportTodoTxt();
-            const blob = new Blob([text.length ? `${text}\n` : ""], {
-              type: "text/plain;charset=utf-8",
-            });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "todo.txt";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(url);
-          }}
+          onUndo={() => void performUndo()}
+          onRedo={() => void performRedo()}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          undoLabel={undoLabel ? `Undo: ${undoLabel}` : undefined}
+          redoLabel={redoLabel ? `Redo: ${redoLabel}` : undefined}
         />
       )}
-
-      <UndoToast />
     </div>
   );
 }
