@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { Copy, Download, Plus } from "lucide-react";
 import { useMountEffect } from "@/hooks/useMountEffect";
 import { useProjectStore } from "@/stores/project-store";
 
@@ -68,20 +69,20 @@ export function BottomBar({
         <button
           type="button"
           onClick={() => void onCopyAll()}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--border)] text-base text-[var(--muted)]"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)]"
           aria-label="Copy all todos"
           title="Copy all"
         >
-          ⧉
+          <Copy size={16} />
         </button>
         <button
           type="button"
           onClick={onDownloadAll}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--border)] text-base text-[var(--muted)]"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)]"
           aria-label="Download todo.txt"
           title="Export"
         >
-          ⇩
+          <Download size={16} />
         </button>
 
         <div className="relative min-w-0 flex-1">
@@ -105,9 +106,9 @@ export function BottomBar({
 
         <button
           type="submit"
-          className="flex h-10 w-12 shrink-0 items-center justify-center rounded-md bg-[var(--primary)] text-base font-semibold text-[var(--primary-fg)]"
+          className="flex h-10 w-12 shrink-0 items-center justify-center rounded-md bg-[var(--primary)] text-[var(--primary-fg)]"
         >
-          +
+          <Plus size={20} />
         </button>
       </form>
     </footer>

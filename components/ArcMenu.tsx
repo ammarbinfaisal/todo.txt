@@ -1,17 +1,18 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { Check, Pencil, Tag, Trash2 } from "lucide-react";
 import { useEscapeKey } from "@/hooks/useEscapeKey";
 import { tick } from "@/lib/haptics";
 
 export type ArcAction = "complete" | "edit" | "tag" | "delete";
 
-const ITEMS: { action: ArcAction; icon: string; label: string }[] = [
-  { action: "complete", icon: "✓", label: "Done" },
-  { action: "edit", icon: "✏", label: "Edit" },
-  { action: "tag", icon: "🏷", label: "Tag" },
-  { action: "delete", icon: "🗑", label: "Delete" },
+const ITEMS: { action: ArcAction; icon: ReactNode; label: string }[] = [
+  { action: "complete", icon: <Check size={18} />, label: "Done" },
+  { action: "edit", icon: <Pencil size={18} />, label: "Edit" },
+  { action: "tag", icon: <Tag size={18} />, label: "Tag" },
+  { action: "delete", icon: <Trash2 size={18} />, label: "Delete" },
 ];
 
 const RADIUS = 56;
@@ -44,9 +45,7 @@ export function ArcMenu({
   const [revealed, setRevealed] = useState(false);
   const prevOpen = useRef(false);
 
-  // Derive revealed state from open prop without useEffect
   if (open && !prevOpen.current) {
-    // Just opened — schedule reveal on next frame
     requestAnimationFrame(() => setRevealed(true));
     tick();
   } else if (!open && prevOpen.current) {
@@ -91,11 +90,13 @@ export function ArcMenu({
               onPointerEnter={() => tick()}
               className={[
                 "absolute flex h-11 w-11 items-center justify-center rounded-full",
-                "border border-[var(--border)] bg-[var(--surface)] text-base shadow-md",
+                "border border-[var(--border)] bg-[var(--surface)] shadow-md",
                 "transition-all duration-150",
                 item.action === "delete"
-                  ? "active:bg-red-500/20"
-                  : "active:bg-[var(--surface-2)]",
+                  ? "text-red-500 active:bg-red-500/20"
+                  : item.action === "complete"
+                    ? "text-emerald-600 active:bg-emerald-500/20"
+                    : "text-[var(--fg)] active:bg-[var(--surface-2)]",
               ].join(" ")}
               style={{
                 transform: revealed

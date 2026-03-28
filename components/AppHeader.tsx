@@ -1,15 +1,17 @@
 "use client";
 
+import type { ReactNode } from "react";
+import { Moon, Sun, Square } from "lucide-react";
 import { FilterChips } from "@/components/FilterChips";
 import type { Theme } from "@/stores/theme-store";
 import type { TodoPriority } from "@/types/todo";
 
 type Status = "all" | "active" | "done";
 
-const THEME_ICON: Record<Theme, string> = {
-  light: "☀",
-  beige: "◻",
-  dark: "☾",
+const THEME_ICON: Record<Theme, ReactNode> = {
+  light: <Sun size={16} />,
+  beige: <Square size={16} />,
+  dark: <Moon size={16} />,
 };
 
 export function AppHeader({
@@ -41,11 +43,11 @@ export function AppHeader({
         <button
           type="button"
           onClick={onCycleTheme}
-          className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--border)] text-base text-[var(--muted)] md:w-auto md:gap-1.5 md:px-3"
+          className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)] md:w-auto md:gap-1.5 md:px-3"
           aria-label={`Switch theme (${theme})`}
           title="Theme"
         >
-          <span>{THEME_ICON[theme]}</span>
+          {THEME_ICON[theme]}
           <span className="hidden text-sm md:inline">{theme}</span>
         </button>
       </div>

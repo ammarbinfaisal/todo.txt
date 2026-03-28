@@ -8,7 +8,6 @@ import { BatchBar } from "@/components/BatchBar";
 import { BottomBar } from "@/components/BottomBar";
 import { EditSheet } from "@/components/EditSheet";
 import { ProjectChipEditor, useProjectChipEditor } from "@/components/ProjectChipEditor";
-import { QuickEditPopover } from "@/components/QuickEditPopover";
 import { TagPicker } from "@/components/TagPicker";
 import { TodoItem } from "@/components/TodoItem";
 import { UndoToast } from "@/components/UndoToast";
@@ -44,7 +43,6 @@ export function TodoApp() {
   const toggleProject = useTodoStore((s) => s.toggleProject);
   const bulkComplete = useTodoStore((s) => s.bulkComplete);
   const bulkDelete = useTodoStore((s) => s.bulkDelete);
-  const bulkAddProject = useTodoStore((s) => s.bulkAddProject);
 
   // Projects
   const loadProjects = useProjectStore((s) => s.load);
@@ -56,9 +54,9 @@ export function TodoApp() {
     y: number;
   } | null>(null);
 
-  // Quick edit popover
-  const quickEdit = usePopover();
-  const [quickEditTodoId, setQuickEditTodoId] = useState<string | null>(null);
+  // Inline edit state
+  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
 
   // Tag picker popover
   const tagPicker = usePopover();
@@ -91,17 +89,6 @@ export function TodoApp() {
     [allTodos, filters]
   );
 
-  const arcTodo = useMemo(
-    () => (arcMenu ? allTodos.find((t) => t.id === arcMenu.todoId) : undefined),
-    [allTodos, arcMenu]
-  );
-
-  const quickEditTodo = useMemo(
-    () =>
-      quickEditTodoId ? allTodos.find((t) => t.id === quickEditTodoId) : undefined,
-    [allTodos, quickEditTodoId]
-  );
-
   const tagPickerTodo = useMemo(
     () =>
       tagPickerTodoId ? allTodos.find((t) => t.id === tagPickerTodoId) : undefined,
@@ -117,7 +104,7 @@ export function TodoApp() {
   // Arc menu action handler
   const handleArcAction = (action: ArcAction) => {
     if (!arcMenu) return;
-    const { todoId, x, y } = arcMenu;
+    const { todoId } = arcMenu;
     setArcMenu(null);
 
     switch (action) {
@@ -129,15 +116,34 @@ export function TodoApp() {
         heavy();
         void removeWithUndo(todoId);
         break;
-      case "edit":
-        setQuickEditTodoId(todoId);
-        quickEdit.open({ clientX: x, clientY: y });
+      case "edit": {
+        // Start inline edit
+        const todo = allTodos.find((t) => t.id === todoId);
+        if (todo) {
+          setEditingTodoId(todoId);
+          setEditDraft(todo.line);
+        }
         break;
+      }
       case "tag":
         setTagPickerTodoId(todoId);
-        tagPicker.open({ clientX: x, clientY: y });
+        tagPicker.open({ clientX: arcMenu.x, clientY: arcMenu.y });
         break;
     }
+  };
+
+  const handleEditSave = () => {
+    if (editingTodoId && editDraft.trim()) {
+      bump();
+      void updateLine(editingTodoId, editDraft.trim());
+    }
+    setEditingTodoId(null);
+    setEditDraft("");
+  };
+
+  const handleEditCancel = () => {
+    setEditingTodoId(null);
+    setEditDraft("");
   };
 
   return (
@@ -170,6 +176,8 @@ export function TodoApp() {
                 todo={todo}
                 selected={batch.isSelected(todo.id)}
                 selectMode={batch.selectMode}
+                editing={editingTodoId === todo.id}
+                editDraft={editingTodoId === todo.id ? editDraft : ""}
                 onTap={(e) => {
                   setArcMenu({
                     todoId: todo.id,
@@ -188,6 +196,9 @@ export function TodoApp() {
                 onEditProjectDot={(name, e) => {
                   chipEditor.openForProject(name, e);
                 }}
+                onEditChange={setEditDraft}
+                onEditSave={handleEditSave}
+                onEditCancel={handleEditCancel}
               />
             ))}
           </ul>
@@ -200,30 +211,6 @@ export function TodoApp() {
         position={arcMenu ?? { x: 0, y: 0 }}
         onAction={handleArcAction}
         onClose={() => setArcMenu(null)}
-      />
-
-      {/* Quick Edit Popover */}
-      <QuickEditPopover
-        open={quickEdit.isOpen}
-        initialText={quickEditTodo?.line ?? ""}
-        onSave={(line) => {
-          if (quickEditTodoId) {
-            void updateLine(quickEditTodoId, line);
-          }
-          quickEdit.close();
-          setQuickEditTodoId(null);
-        }}
-        onClose={() => {
-          quickEdit.close();
-          setQuickEditTodoId(null);
-        }}
-        onExpand={() => {
-          quickEdit.close();
-          setEditSheetTodoId(quickEditTodoId);
-          setQuickEditTodoId(null);
-        }}
-        popoverRef={quickEdit.popoverRef}
-        style={quickEdit.style}
       />
 
       {/* Tag Picker Popover */}
@@ -287,12 +274,10 @@ export function TodoApp() {
             batch.exit();
           }}
           onTag={() => {
-            // Open tag picker for batch — reuse tagPicker at bottom center
             tagPicker.open({
               clientX: window.innerWidth / 2,
               clientY: window.innerHeight - 120,
             });
-            // Store batch IDs in tagPickerTodoId as special marker
             setTagPickerTodoId(null);
           }}
           onCancel={batch.exit}

@@ -1,5 +1,7 @@
 "use client";
 
+import { Check, CheckCheck, Tag, Trash2, X } from "lucide-react";
+
 export function BatchBar({
   count,
   totalCount,
@@ -23,10 +25,10 @@ export function BatchBar({
         <button
           type="button"
           onClick={onCancel}
-          className="flex h-10 w-10 items-center justify-center rounded-md text-base text-[var(--muted)]"
+          className="flex h-10 w-10 items-center justify-center rounded-md text-[var(--muted)]"
           aria-label="Cancel selection"
         >
-          ✕
+          <X size={18} />
         </button>
 
         <button
@@ -34,7 +36,7 @@ export function BatchBar({
           onClick={onSelectAll}
           className="flex h-10 items-center gap-1 rounded-md px-2 text-sm text-[var(--muted)]"
         >
-          <span>✓</span>
+          <CheckCheck size={16} />
           <span className="hidden md:inline">All</span>
         </button>
 
@@ -48,26 +50,26 @@ export function BatchBar({
         <button
           type="button"
           onClick={onComplete}
-          className="flex h-10 w-10 items-center justify-center rounded-md text-base text-emerald-600"
+          className="flex h-10 w-10 items-center justify-center rounded-md text-emerald-600"
           aria-label="Complete selected"
         >
-          ✓
+          <Check size={18} />
         </button>
         <button
           type="button"
           onClick={onTag}
-          className="flex h-10 w-10 items-center justify-center rounded-md text-base text-[var(--fg)]"
+          className="flex h-10 w-10 items-center justify-center rounded-md text-[var(--fg)]"
           aria-label="Tag selected"
         >
-          🏷
+          <Tag size={18} />
         </button>
         <button
           type="button"
           onClick={onDelete}
-          className="flex h-10 w-10 items-center justify-center rounded-md text-base text-red-500"
+          className="flex h-10 w-10 items-center justify-center rounded-md text-red-500"
           aria-label="Delete selected"
         >
-          🗑
+          <Trash2 size={18} />
         </button>
       </div>
     </div>
