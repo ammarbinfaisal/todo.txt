@@ -62,8 +62,8 @@ export function TodoItem({
           type="button"
           onClick={onToggle}
           className={[
-            "mt-0.5 h-7 w-7 shrink-0 rounded-full border md:mt-0 md:h-10 md:w-10",
-            "grid place-items-center text-[11px] md:text-sm",
+            "mt-0.5 h-8 w-8 shrink-0 rounded-full border md:mt-0 md:h-10 md:w-10",
+            "grid place-items-center text-sm",
             todo.completed
               ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-fg)]"
               : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]"
@@ -83,7 +83,7 @@ export function TodoItem({
             <PriorityBadge priority={todo.priority} />
             <span
               className={[
-                "min-w-0 truncate whitespace-nowrap text-[13px] leading-5 md:text-sm",
+                "min-w-0 truncate whitespace-nowrap text-base leading-6",
                 todo.completed ? "line-through text-[var(--muted)]" : ""
               ].join(" ")}
             >
@@ -97,7 +97,7 @@ export function TodoItem({
                 return (
                   <span
                     key={`p:${p}`}
-                    className={`inline-flex items-center rounded px-1 py-px text-[10px] font-medium leading-4 ${c.bg} ${c.fg}`}
+                    className={`inline-flex items-center rounded px-1.5 py-px text-xs font-medium leading-5 ${c.bg} ${c.fg}`}
                   >
                     +{p}
                   </span>
@@ -106,7 +106,7 @@ export function TodoItem({
               {todo.contexts.map((ctx) => (
                 <span
                   key={`c:${ctx}`}
-                  className="inline-flex items-center rounded bg-neutral-500/10 px-1 py-px text-[10px] font-medium leading-4 text-[var(--muted)]"
+                  className="inline-flex items-center rounded bg-neutral-500/10 px-1.5 py-px text-xs font-medium leading-5 text-[var(--muted)]"
                 >
                   @{ctx}
                 </span>

@@ -34,7 +34,7 @@ export function PriorityBadge({ priority }: { priority?: TodoPriority }) {
   return (
     <span
       className={[
-        "inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
+        "inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold tabular-nums",
         PRIORITY_STYLES[priority]
       ].join(" ")}
     >

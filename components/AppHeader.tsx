@@ -26,7 +26,7 @@ export function AppHeader({
       <div className="flex items-center justify-between">
         <div>
           <div className="hidden text-sm font-semibold tracking-tight md:block">TodoTXT</div>
-          <div className="text-[11px] text-[var(--muted)]">
+          <div className="text-sm text-[var(--muted)]">
             {counts.active} active · {counts.done} done
           </div>
         </div>

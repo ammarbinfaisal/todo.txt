@@ -22,7 +22,7 @@ function Chip({
       aria-label={ariaLabel}
       title={ariaLabel}
       className={[
-        "h-7 rounded-full px-2.5 text-xs font-medium md:h-8 md:px-3",
+        "h-8 rounded-full px-3 text-sm font-medium",
         "border",
         active
           ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-fg)]"
