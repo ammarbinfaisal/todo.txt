@@ -6,12 +6,14 @@ type Status = "all" | "active" | "done";
 
 function Chip({
   active,
+  icon,
   label,
   ariaLabel,
-  onClick
+  onClick,
 }: {
   active: boolean;
-  label: string;
+  icon: string;
+  label?: string;
   ariaLabel: string;
   onClick: () => void;
 }) {
@@ -22,14 +24,15 @@ function Chip({
       aria-label={ariaLabel}
       title={ariaLabel}
       className={[
-        "h-8 rounded-full px-3 text-sm font-medium",
+        "flex h-8 items-center gap-1 rounded-full px-3 text-sm font-medium",
         "border",
         active
           ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-fg)]"
-          : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]"
+          : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)]",
       ].join(" ")}
     >
-      {label}
+      <span>{icon}</span>
+      {label && <span className="hidden md:inline">{label}</span>}
     </button>
   );
 }
@@ -51,26 +54,29 @@ export function FilterChips({
     <div className="flex gap-1.5 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] md:gap-2">
       <Chip
         active={status === "all"}
-        label="≡"
+        icon="≡"
+        label="All"
         ariaLabel="Show all"
         onClick={() => onStatusChange("all")}
       />
       <Chip
         active={status === "active"}
-        label="○"
+        icon="○"
+        label="Active"
         ariaLabel="Show active"
         onClick={() => onStatusChange("active")}
       />
       <Chip
         active={status === "done"}
-        label="✓"
+        icon="✓"
+        label="Done"
         ariaLabel="Show done"
         onClick={() => onStatusChange("done")}
       />
       <div className="w-px self-stretch bg-[var(--border)]" />
       <Chip
         active={!priority}
-        label="•"
+        icon="•"
         ariaLabel="Any priority"
         onClick={() => onPriorityChange(undefined)}
       />
@@ -78,7 +84,7 @@ export function FilterChips({
         <Chip
           key={p}
           active={priority === p}
-          label={p}
+          icon={p}
           ariaLabel={`Priority ${p}`}
           onClick={() => onPriorityChange(p)}
         />

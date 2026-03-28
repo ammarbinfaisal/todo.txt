@@ -62,7 +62,9 @@ export function parseTodoLine(line: string): ParsedTodoLine {
   for (; index < tokens.length; index += 1) {
     const token = tokens[index];
     if (token.startsWith("+") && token.length > 1) {
-      projects.push(token.slice(1));
+      // Support +foo+bar (no space) → two projects
+      const parts = token.slice(1).split("+").filter((s) => s.length > 0);
+      for (const part of parts) projects.push(part);
       continue;
     }
     if (token.startsWith("@") && token.length > 1) {

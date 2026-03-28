@@ -6,6 +6,12 @@ import type { TodoPriority } from "@/types/todo";
 
 type Status = "all" | "active" | "done";
 
+const THEME_ICON: Record<Theme, string> = {
+  light: "☀",
+  beige: "◻",
+  dark: "☾",
+};
+
 export function AppHeader({
   counts,
   theme,
@@ -25,7 +31,9 @@ export function AppHeader({
     <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface)] px-2 py-1.5 md:px-4 md:py-3">
       <div className="flex items-center justify-between">
         <div>
-          <div className="hidden text-sm font-semibold tracking-tight md:block">TodoTXT</div>
+          <div className="hidden text-sm font-semibold tracking-tight md:block">
+            TodoTXT
+          </div>
           <div className="text-sm text-[var(--muted)]">
             {counts.active} active · {counts.done} done
           </div>
@@ -33,17 +41,12 @@ export function AppHeader({
         <button
           type="button"
           onClick={onCycleTheme}
-          className="h-10 w-10 rounded-md border border-[var(--border)] text-xs text-[var(--muted)]"
-          aria-label={
-            theme === "dark"
-              ? "Switch theme (dark)"
-              : theme === "beige"
-                ? "Switch theme (beige)"
-                : "Switch theme (light)"
-          }
+          className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--border)] text-base text-[var(--muted)] md:w-auto md:gap-1.5 md:px-3"
+          aria-label={`Switch theme (${theme})`}
           title="Theme"
         >
-          {theme === "dark" ? "☾" : theme === "beige" ? "◻" : "☀"}
+          <span>{THEME_ICON[theme]}</span>
+          <span className="hidden text-sm md:inline">{theme}</span>
         </button>
       </div>
 

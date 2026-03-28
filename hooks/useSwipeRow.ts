@@ -2,20 +2,17 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { MouseEvent, PointerEvent } from "react";
-
-type SwipeAction = "none" | "left" | "right";
+import { tick } from "@/lib/haptics";
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
 
 export function useSwipeRow({
-  onSwipeLeft,
   onSwipeRight,
   threshold = 80,
-  max = 140
+  max = 140,
 }: {
-  onSwipeLeft: () => void;
   onSwipeRight: () => void;
   threshold?: number;
   max?: number;
@@ -25,6 +22,7 @@ export function useSwipeRow({
   const dragging = useRef(false);
   const lockedAxis = useRef<"none" | "x" | "y">("none");
   const didSwipe = useRef(false);
+  const crossedThreshold = useRef(false);
 
   const [x, setX] = useState(0);
   const [active, setActive] = useState(false);
@@ -34,6 +32,7 @@ export function useSwipeRow({
     setX(0);
     dragging.current = false;
     lockedAxis.current = "none";
+    crossedThreshold.current = false;
   }, []);
 
   const onPointerDown = useCallback((e: PointerEvent) => {
@@ -43,41 +42,53 @@ export function useSwipeRow({
     dragging.current = true;
     lockedAxis.current = "none";
     didSwipe.current = false;
+    crossedThreshold.current = false;
     setActive(true);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }, []);
 
-  const onPointerMove = useCallback((e: PointerEvent) => {
-    if (!dragging.current) return;
-    const dx = e.clientX - startX.current;
-    const dy = e.clientY - startY.current;
+  const onPointerMove = useCallback(
+    (e: PointerEvent) => {
+      if (!dragging.current) return;
+      const dx = e.clientX - startX.current;
+      const dy = e.clientY - startY.current;
 
-    if (lockedAxis.current === "none") {
-      const adx = Math.abs(dx);
-      const ady = Math.abs(dy);
-      if (adx < 4 && ady < 4) return;
-      lockedAxis.current = adx > ady * 1.3 ? "x" : "y";
-    }
+      if (lockedAxis.current === "none") {
+        const adx = Math.abs(dx);
+        const ady = Math.abs(dy);
+        if (adx < 4 && ady < 4) return;
+        lockedAxis.current = adx > ady * 1.3 ? "x" : "y";
+      }
 
-    if (lockedAxis.current === "y") {
-      setActive(false);
-      return;
-    }
+      if (lockedAxis.current === "y") {
+        setActive(false);
+        return;
+      }
 
-    didSwipe.current = true;
-    e.preventDefault();
-    setX(clamp(dx, -max, max));
-  }, [max]);
+      didSwipe.current = true;
+      e.preventDefault();
+
+      // Right swipe only — clamp left at 0
+      const clamped = clamp(dx, 0, max);
+      setX(clamped);
+
+      // Haptic tick when crossing threshold
+      if (clamped >= threshold && !crossedThreshold.current) {
+        crossedThreshold.current = true;
+        tick();
+      } else if (clamped < threshold && crossedThreshold.current) {
+        crossedThreshold.current = false;
+      }
+    },
+    [max, threshold]
+  );
 
   const finish = useCallback(() => {
     const dx = x;
-    const direction: SwipeAction =
-      dx <= -threshold ? "left" : dx >= threshold ? "right" : "none";
-
+    const shouldFire = dx >= threshold;
     reset();
-    if (direction === "left") onSwipeLeft();
-    if (direction === "right") onSwipeRight();
-  }, [x, threshold, onSwipeLeft, onSwipeRight, reset]);
+    if (shouldFire) onSwipeRight();
+  }, [x, threshold, onSwipeRight, reset]);
 
   const onPointerUp = useCallback(() => {
     if (!dragging.current) return;
@@ -104,7 +115,7 @@ export function useSwipeRow({
       onPointerMove,
       onPointerUp,
       onPointerCancel,
-      onClickCapture
-    }
+      onClickCapture,
+    },
   };
 }

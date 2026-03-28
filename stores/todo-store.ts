@@ -31,6 +31,11 @@ interface TodoState {
   exportTodoTxt: () => string;
   setStatusFilter: (status: StatusFilter) => void;
   setPriorityFilter: (priority?: TodoPriority) => void;
+  toggleProject: (id: string, project: string) => Promise<void>;
+  bulkComplete: (ids: string[]) => Promise<void>;
+  bulkDelete: (ids: string[]) => Promise<void>;
+  bulkAddProject: (ids: string[], project: string) => Promise<void>;
+  reorder: (fromIndex: number, toIndex: number) => void;
 }
 
 function nowIso() {
@@ -202,7 +207,98 @@ export const useTodoStore = create<TodoState>()(
       set((state) => {
         state.filters.priority = priority;
       });
-    }
+    },
+
+    toggleProject: async (id, project) => {
+      const current = get().todos.find((t) => t.id === id);
+      if (!current) return;
+      const hasProject = current.projects.includes(project);
+      const newProjects = hasProject
+        ? current.projects.filter((p) => p !== project)
+        : [...current.projects, project];
+      const parts = {
+        completed: current.completed,
+        completionDate: current.completionDate,
+        priority: current.priority,
+        creationDate: current.creationDate,
+        text: current.text,
+        projects: newProjects,
+        contexts: current.contexts,
+        meta: current.meta,
+      };
+      const line = serializeTodoLine(parts);
+      const updated = updateTodoFromLine(current, line);
+      await dbPutTodo(updated);
+      set((state) => {
+        const idx = state.todos.findIndex((t) => t.id === id);
+        if (idx !== -1) state.todos[idx] = updated;
+      });
+    },
+
+    bulkComplete: async (ids) => {
+      const idSet = new Set(ids);
+      const todosToUpdate = get().todos.filter((t) => idSet.has(t.id) && !t.completed);
+      for (const current of todosToUpdate) {
+        const line = serializeTodoLine({
+          completed: true,
+          completionDate: nowIso().slice(0, 10),
+          priority: current.priority,
+          creationDate: current.creationDate,
+          text: current.text,
+          projects: current.projects,
+          contexts: current.contexts,
+          meta: current.meta,
+        });
+        const updated = updateTodoFromLine(current, line);
+        await dbPutTodo(updated);
+        set((state) => {
+          const idx = state.todos.findIndex((t) => t.id === current.id);
+          if (idx !== -1) state.todos[idx] = updated;
+        });
+      }
+    },
+
+    bulkDelete: async (ids) => {
+      for (const id of ids) {
+        await dbDeleteTodo(id);
+      }
+      set((state) => {
+        const idSet = new Set(ids);
+        state.todos = state.todos.filter((t) => !idSet.has(t.id));
+      });
+    },
+
+    bulkAddProject: async (ids, project) => {
+      const idSet = new Set(ids);
+      const todosToUpdate = get().todos.filter(
+        (t) => idSet.has(t.id) && !t.projects.includes(project)
+      );
+      for (const current of todosToUpdate) {
+        const line = serializeTodoLine({
+          completed: current.completed,
+          completionDate: current.completionDate,
+          priority: current.priority,
+          creationDate: current.creationDate,
+          text: current.text,
+          projects: [...current.projects, project],
+          contexts: current.contexts,
+          meta: current.meta,
+        });
+        const updated = updateTodoFromLine(current, line);
+        await dbPutTodo(updated);
+        set((state) => {
+          const idx = state.todos.findIndex((t) => t.id === current.id);
+          if (idx !== -1) state.todos[idx] = updated;
+        });
+      }
+    },
+
+    reorder: (fromIndex, toIndex) => {
+      set((state) => {
+        const [item] = state.todos.splice(fromIndex, 1);
+        state.todos.splice(toIndex, 0, item);
+      });
+    },
   }))
 );
 
