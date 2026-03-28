@@ -22,7 +22,7 @@ function Chip({
       aria-label={ariaLabel}
       title={ariaLabel}
       className={[
-        "h-8 rounded-full px-3 text-xs font-medium",
+        "h-7 rounded-full px-2.5 text-xs font-medium md:h-8 md:px-3",
         "border",
         active
           ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-fg)]"
@@ -48,7 +48,7 @@ export function FilterChips({
   const priorities: TodoPriority[] = ["A", "B", "C", "D"];
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
+    <div className="flex gap-1.5 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] md:gap-2">
       <Chip
         active={status === "all"}
         label="≡"

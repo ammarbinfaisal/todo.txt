@@ -22,10 +22,10 @@ export function AppHeader({
   onPriorityChange: (p?: TodoPriority) => void;
 }) {
   return (
-    <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+    <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface)] px-2 py-1.5 md:px-4 md:py-3">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-sm font-semibold tracking-tight">TodoTXT</div>
+          <div className="hidden text-sm font-semibold tracking-tight md:block">TodoTXT</div>
           <div className="text-[11px] text-[var(--muted)]">
             {counts.active} active · {counts.done} done
           </div>
@@ -47,7 +47,7 @@ export function AppHeader({
         </button>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-1.5 md:mt-3">
         <FilterChips
           status={filters.status}
           priority={filters.priority}
