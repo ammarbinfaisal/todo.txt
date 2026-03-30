@@ -187,6 +187,56 @@ export function DocsPage() {
           </p>
         </Section>
 
+        <Section title="Keyboard shortcuts">
+          <p>
+            All shortcuts are customizable in Settings. Defaults:
+          </p>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm">
+              <span>Undo</span><Code>Ctrl + Z</Code>
+            </div>
+            <div className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm">
+              <span>Redo</span><Code>Ctrl + Shift + Z</Code>
+            </div>
+            <div className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm">
+              <span>Focus input</span><Code>Ctrl + K</Code>
+            </div>
+            <div className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm">
+              <span>Accept autocomplete</span><Code>Tab</Code>
+            </div>
+          </div>
+          <p className="text-[var(--muted)]">
+            On Mac, <Code>Ctrl</Code> becomes <Code>⌘</Code>.
+          </p>
+        </Section>
+
+        <Section title="Settings file format">
+          <p>
+            You can export and import your settings as a JSON file from the
+            Settings page. The file looks like this:
+          </p>
+          <div className="overflow-x-auto rounded-md border border-[var(--border)] bg-[var(--surface)] p-3">
+            <pre className="text-xs leading-5">{`{
+  "projectPrefix": "+",
+  "contextPrefix": "@",
+  "shortcuts": {
+    "undo": "mod+z",
+    "redo": "mod+shift+z",
+    "focusInput": "mod+k",
+    "newTodo": "mod+n"
+  }
+}`}</pre>
+          </div>
+          <ul className="list-inside list-disc space-y-1 text-xs text-[var(--muted)]">
+            <li><Code>projectPrefix</Code> — single character for tagging projects</li>
+            <li><Code>contextPrefix</Code> — single character for contexts</li>
+            <li><Code>shortcuts</Code> — key combos using <Code>mod</Code> (Ctrl/⌘), <Code>shift</Code>, <Code>alt</Code> + a key</li>
+          </ul>
+          <p className="text-[var(--muted)]">
+            Import the file on another device to sync your preferences.
+          </p>
+        </Section>
+
         <div className="pb-8 pt-4 text-center text-xs text-[var(--muted)]">
           TodoTXT PWA — offline-first, gesture-driven
         </div>
