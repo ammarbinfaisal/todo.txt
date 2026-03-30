@@ -43,13 +43,13 @@ export function BottomBar({
         e.preventDefault();
         inputRef.current?.focus();
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+      // Only intercept undo/redo when no text input is focused
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isEditable = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !isEditable) {
         e.preventDefault();
-        onUndoRef.current();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && e.shiftKey) {
-        e.preventDefault();
-        onRedoRef.current();
+        if (e.shiftKey) onRedoRef.current();
+        else onUndoRef.current();
       }
     };
     window.addEventListener("keydown", onKeyDown);
