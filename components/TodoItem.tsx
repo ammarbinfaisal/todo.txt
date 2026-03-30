@@ -157,14 +157,12 @@ export function TodoItem({
         {selectMode ? (
           <div
             className={[
-              "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border md:h-10 md:w-10",
+              "h-8 w-8 shrink-0 rounded-full border md:h-10 md:w-10",
               selected
-                ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-fg)]"
+                ? "border-[var(--primary)] bg-[var(--primary)]/10"
                 : "border-[var(--border)] bg-[var(--surface)]",
             ].join(" ")}
-          >
-            {selected && <Check size={14} />}
-          </div>
+          />
         ) : (
           <button
             type="button"
@@ -213,7 +211,7 @@ export function TodoItem({
               <span
                 className={[
                   "min-w-0 truncate whitespace-nowrap text-base leading-6",
-                  todo.completed ? "line-through text-[var(--muted)]" : "",
+                  todo.completed || selected ? "line-through text-[var(--muted)]" : "",
                 ].join(" ")}
               >
                 {todo.text || todo.line}
