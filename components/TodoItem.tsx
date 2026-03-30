@@ -57,6 +57,7 @@ export function TodoItem({
   const longPressFired = useRef(false);
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    if (editing) return; // Don't start swipe/longpress while editing
     swipe.bind.onPointerDown(e);
     longPressFired.current = false;
     longPressTimer.current = setTimeout(() => {
@@ -66,6 +67,7 @@ export function TodoItem({
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
+    if (editing) return;
     swipe.bind.onPointerMove(e);
     if (longPressTimer.current && Math.abs(e.movementX) + Math.abs(e.movementY) > 4) {
       clearTimeout(longPressTimer.current);
@@ -74,6 +76,7 @@ export function TodoItem({
   };
 
   const handlePointerUp = () => {
+    if (editing) return;
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
@@ -90,10 +93,10 @@ export function TodoItem({
   };
 
   const handleRowClick = (e: React.MouseEvent) => {
+    if (editing) return; // Don't open arc menu or select while editing
     swipe.bind.onClickCapture(e);
     if (e.defaultPrevented) return;
 
-    // Suppress tap if long press fired
     if (longPressFired.current) {
       longPressFired.current = false;
       return;
@@ -196,9 +199,11 @@ export function TodoItem({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
+                  e.stopPropagation();
                   onEditSave();
                 } else if (e.key === "Escape") {
                   e.preventDefault();
+                  e.stopPropagation();
                   onEditCancel();
                 }
               }}
