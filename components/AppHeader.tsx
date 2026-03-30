@@ -1,23 +1,14 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { Copy, Download, Moon, Sun, Square } from "lucide-react";
+import { Copy, Download, Settings } from "lucide-react";
+import Link from "next/link";
 import { FilterChips } from "@/components/FilterChips";
-import type { Theme } from "@/stores/theme-store";
 import type { TodoPriority } from "@/types/todo";
 
 type Status = "all" | "active" | "done";
 
-const THEME_ICON: Record<Theme, ReactNode> = {
-  light: <Sun size={16} />,
-  beige: <Square size={16} />,
-  dark: <Moon size={16} />,
-};
-
 export function AppHeader({
   counts,
-  theme,
-  onCycleTheme,
   filters,
   onStatusChange,
   onPriorityChange,
@@ -25,8 +16,6 @@ export function AppHeader({
   onDownloadAll,
 }: {
   counts: { active: number; done: number };
-  theme: Theme;
-  onCycleTheme: () => void;
   filters: { status: Status; priority?: TodoPriority };
   onStatusChange: (s: Status) => void;
   onPriorityChange: (p?: TodoPriority) => void;
@@ -63,15 +52,14 @@ export function AppHeader({
           >
             <Download size={15} />
           </button>
-          <button
-            type="button"
-            onClick={onCycleTheme}
+          <Link
+            href="/settings"
             className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)]"
-            aria-label={`Switch theme (${theme})`}
-            title="Theme"
+            aria-label="Settings"
+            title="Settings"
           >
-            {THEME_ICON[theme]}
-          </button>
+            <Settings size={15} />
+          </Link>
         </div>
       </div>
 

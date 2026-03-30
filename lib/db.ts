@@ -2,6 +2,7 @@ import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 
 import type { ChangeEntry } from "@/types/history";
 import type { ProjectConfig } from "@/types/project";
+import type { AppSettings } from "@/types/settings";
 import type { Todo } from "@/types/todo";
 
 interface TodoTxtDB extends DBSchema {
@@ -19,6 +20,10 @@ interface TodoTxtDB extends DBSchema {
     value: ChangeEntry;
     indexes: { "by-seq": number };
   };
+  settings: {
+    key: string;
+    value: AppSettings & { id: string };
+  };
 }
 
 let dbPromise: Promise<IDBPDatabase<TodoTxtDB>> | null = null;
@@ -29,7 +34,7 @@ function getDb(): Promise<IDBPDatabase<TodoTxtDB>> {
   }
 
   if (!dbPromise) {
-    dbPromise = openDB<TodoTxtDB>("todotxt", 3, {
+    dbPromise = openDB<TodoTxtDB>("todotxt", 4, {
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           const store = db.createObjectStore("todos", { keyPath: "id" });
@@ -45,6 +50,9 @@ function getDb(): Promise<IDBPDatabase<TodoTxtDB>> {
             autoIncrement: true,
           });
           historyStore.createIndex("by-seq", "seq", { unique: true });
+        }
+        if (oldVersion < 4) {
+          db.createObjectStore("settings", { keyPath: "id" });
         }
       },
     });
@@ -139,4 +147,19 @@ export async function dbDeleteOldestChangeEntries(keepCount: number): Promise<vo
 export async function dbClearHistory(): Promise<void> {
   const db = await getDb();
   await db.clear("history");
+}
+
+// --- Settings ---
+
+export async function dbGetSettings(): Promise<AppSettings | null> {
+  const db = await getDb();
+  const row = await db.get("settings", "app");
+  if (!row) return null;
+  const { id: _, ...settings } = row;
+  return settings as AppSettings;
+}
+
+export async function dbPutSettings(settings: AppSettings): Promise<void> {
+  const db = await getDb();
+  await db.put("settings", { id: "app", ...settings });
 }

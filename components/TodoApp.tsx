@@ -22,6 +22,7 @@ import {
   selectRedoLabel,
 } from "@/stores/history-store";
 import { useProjectStore } from "@/stores/project-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { useThemeStore } from "@/stores/theme-store";
 import { selectFilteredTodos, useTodoStore } from "@/stores/todo-store";
 
@@ -29,8 +30,6 @@ export function TodoApp() {
   const [input, setInput] = useState("");
 
   // Theme
-  const theme = useThemeStore((s) => s.theme);
-  const cycleTheme = useThemeStore((s) => s.cycle);
   const hydrateTheme = useThemeStore((s) => s.hydrateFromStorage);
 
   // Todos
@@ -62,6 +61,9 @@ export function TodoApp() {
   // Projects
   const loadProjects = useProjectStore((s) => s.load);
 
+  // Settings
+  const loadSettings = useSettingsStore((s) => s.load);
+
   // Arc menu state
   const [arcMenu, setArcMenu] = useState<{
     todoId: string;
@@ -89,6 +91,7 @@ export function TodoApp() {
   // Hydrate on mount
   useMountEffect(() => {
     hydrateTheme();
+    void loadSettings();
     void load();
     void loadProjects();
     void loadHistory();
@@ -165,8 +168,6 @@ export function TodoApp() {
     <div className="flex min-h-dvh flex-col">
       <AppHeader
         counts={{ active: counts.active, done: counts.done }}
-        theme={theme}
-        onCycleTheme={cycleTheme}
         filters={filters}
         onStatusChange={setStatusFilter}
         onPriorityChange={setPriorityFilter}

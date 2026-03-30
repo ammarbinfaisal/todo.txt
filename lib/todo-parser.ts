@@ -1,8 +1,14 @@
 import type { TodoMeta, TodoPriority } from "@/types/todo";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const PRIORITY_RE = /^\([A-Z]\)$/;
+const OLD_PRIORITY_RE = /^\([A-Z]\)$/;
+const NEW_PRIORITY_RE = /^[A-Z]-$/;
 const META_RE = /^[^:\s]+:[^\s]+$/;
+
+export interface ParseOptions {
+  projectPrefix?: string;
+  contextPrefix?: string;
+}
 
 export interface ParsedTodoLine {
   completed: boolean;
@@ -15,15 +21,21 @@ export interface ParsedTodoLine {
   meta: TodoMeta;
 }
 
-export function parseTodoLine(line: string): ParsedTodoLine {
+export function parseTodoLine(
+  line: string,
+  opts: ParseOptions = {}
+): ParsedTodoLine {
+  const pp = opts.projectPrefix ?? "+";
+  const cp = opts.contextPrefix ?? "@";
   const trimmed = line.trim();
+
   if (trimmed.length === 0) {
     return {
       completed: false,
       text: "",
       projects: [],
       contexts: [],
-      meta: {}
+      meta: {},
     };
   }
 
@@ -44,7 +56,13 @@ export function parseTodoLine(line: string): ParsedTodoLine {
     }
   }
 
-  if (tokens[index] && PRIORITY_RE.test(tokens[index])) {
+  // New format: A- (letter + dash)
+  if (tokens[index] && NEW_PRIORITY_RE.test(tokens[index])) {
+    priority = tokens[index].charAt(0) as TodoPriority;
+    index += 1;
+  }
+  // Old format: (A)
+  else if (tokens[index] && OLD_PRIORITY_RE.test(tokens[index])) {
     priority = tokens[index].slice(1, 2) as TodoPriority;
     index += 1;
   }
@@ -61,14 +79,15 @@ export function parseTodoLine(line: string): ParsedTodoLine {
 
   for (; index < tokens.length; index += 1) {
     const token = tokens[index];
-    if (token.startsWith("+") && token.length > 1) {
-      // Support +foo+bar (no space) → two projects
-      const parts = token.slice(1).split("+").filter((s) => s.length > 0);
+    if (token.startsWith(pp) && token.length > pp.length) {
+      // Support prefix+foo+bar → multiple projects (split on prefix char)
+      const rest = token.slice(pp.length);
+      const parts = rest.split(pp).filter((s) => s.length > 0);
       for (const part of parts) projects.push(part);
       continue;
     }
-    if (token.startsWith("@") && token.length > 1) {
-      contexts.push(token.slice(1));
+    if (token.startsWith(cp) && token.length > cp.length) {
+      contexts.push(token.slice(cp.length));
       continue;
     }
     if (META_RE.test(token)) {
@@ -89,13 +108,23 @@ export function parseTodoLine(line: string): ParsedTodoLine {
     text: textTokens.join(" "),
     projects,
     contexts,
-    meta
+    meta,
   };
+}
+
+export interface SerializeOptions {
+  projectPrefix?: string;
+  contextPrefix?: string;
 }
 
 export type SerializeTodoParts = ParsedTodoLine;
 
-export function serializeTodoLine(parts: SerializeTodoParts): string {
+export function serializeTodoLine(
+  parts: SerializeTodoParts,
+  opts: SerializeOptions = {}
+): string {
+  const pp = opts.projectPrefix ?? "+";
+  const cp = opts.contextPrefix ?? "@";
   const tokens: string[] = [];
 
   if (parts.completed) {
@@ -103,16 +132,16 @@ export function serializeTodoLine(parts: SerializeTodoParts): string {
     if (parts.completionDate) tokens.push(parts.completionDate);
   }
 
-  if (parts.priority) tokens.push(`(${parts.priority})`);
+  if (parts.priority) tokens.push(`${parts.priority}-`);
   if (parts.creationDate) tokens.push(parts.creationDate);
 
   if (parts.text.trim().length > 0) tokens.push(parts.text.trim());
 
   for (const project of parts.projects) {
-    if (project.trim().length > 0) tokens.push(`+${project.trim()}`);
+    if (project.trim().length > 0) tokens.push(`${pp}${project.trim()}`);
   }
   for (const context of parts.contexts) {
-    if (context.trim().length > 0) tokens.push(`@${context.trim()}`);
+    if (context.trim().length > 0) tokens.push(`${cp}${context.trim()}`);
   }
   for (const [key, value] of Object.entries(parts.meta)) {
     if (key.trim().length > 0 && value.trim().length > 0) {

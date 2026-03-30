@@ -5,8 +5,9 @@ import { immer } from "zustand/middleware/immer";
 
 import { dbDeleteTodo, dbGetAllTodos, dbPutTodo } from "@/lib/db";
 import { applyRedo, applyUndo } from "@/lib/history-actions";
-import { parseTodoLine, serializeTodoLine } from "@/lib/todo-parser";
+import { parseTodoLine, serializeTodoLine, type ParseOptions, type SerializeOptions } from "@/lib/todo-parser";
 import { useHistoryStore } from "@/stores/history-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import type { Todo, TodoPriority } from "@/types/todo";
 
 type StatusFilter = "all" | "active" | "done";
@@ -43,9 +44,15 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function prefixOpts(): ParseOptions & SerializeOptions {
+  const { projectPrefix, contextPrefix } = useSettingsStore.getState();
+  return { projectPrefix, contextPrefix };
+}
+
 function createTodoFromLine(line: string): Todo {
-  const parsed = parseTodoLine(line);
-  const normalizedLine = serializeTodoLine(parsed);
+  const opts = prefixOpts();
+  const parsed = parseTodoLine(line, opts);
+  const normalizedLine = serializeTodoLine(parsed, opts);
   const timestamp = nowIso();
   return {
     id: crypto.randomUUID(),
@@ -64,8 +71,9 @@ function createTodoFromLine(line: string): Todo {
 }
 
 function updateTodoFromLine(existing: Todo, line: string): Todo {
-  const parsed = parseTodoLine(line);
-  const normalizedLine = serializeTodoLine(parsed);
+  const opts = prefixOpts();
+  const parsed = parseTodoLine(line, opts);
+  const normalizedLine = serializeTodoLine(parsed, opts);
   return {
     ...existing,
     line: normalizedLine,
@@ -158,7 +166,7 @@ export const useTodoStore = create<TodoState>()(
         projects: current.projects,
         contexts: current.contexts,
         meta: current.meta,
-      });
+      }, prefixOpts());
       const updated = updateTodoFromLine(current, line);
       await dbPutTodo(updated);
       set((s) => {
@@ -203,7 +211,7 @@ export const useTodoStore = create<TodoState>()(
         projects: newProjects,
         contexts: current.contexts,
         meta: current.meta,
-      });
+      }, prefixOpts());
       const updated = updateTodoFromLine(current, line);
       await dbPutTodo(updated);
       set((s) => {
@@ -231,7 +239,7 @@ export const useTodoStore = create<TodoState>()(
           projects: current.projects,
           contexts: current.contexts,
           meta: current.meta,
-        });
+        }, prefixOpts());
         const updated = updateTodoFromLine(current, line);
         await dbPutTodo(updated);
         const index = get().todos.findIndex((t) => t.id === current.id);
@@ -288,7 +296,7 @@ export const useTodoStore = create<TodoState>()(
           projects: [...current.projects, project],
           contexts: current.contexts,
           meta: current.meta,
-        });
+        }, prefixOpts());
         const updated = updateTodoFromLine(current, line);
         await dbPutTodo(updated);
         const index = get().todos.findIndex((t) => t.id === current.id);
