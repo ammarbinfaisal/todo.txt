@@ -192,24 +192,29 @@ export function TodoItem({
         {/* Text or edit input */}
         <div className="min-w-0 flex-1">
           {editing ? (
-            <input
-              ref={editInputRef}
-              value={editDraft}
-              onChange={(e) => onEditChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onEditSave();
-                } else if (e.key === "Escape") {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onEditCancel();
-                }
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onEditSave();
               }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full bg-transparent text-base leading-6 text-[var(--fg)] outline-none"
-            />
+            >
+              <input
+                ref={editInputRef}
+                value={editDraft}
+                enterKeyHint="done"
+                onChange={(e) => onEditChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onEditCancel();
+                  }
+                }}
+                className="w-full bg-transparent text-base leading-6 text-[var(--fg)] outline-none"
+              />
+            </form>
           ) : (
             <div className="flex items-center gap-1.5">
               <PriorityBadge priority={todo.priority} />
