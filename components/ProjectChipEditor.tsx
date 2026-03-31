@@ -7,12 +7,6 @@ import { usePopover } from "@/hooks/usePopover";
 import { bump } from "@/lib/haptics";
 import type { CSSProperties, RefObject } from "react";
 
-const EMOJI_PALETTE = [
-  "📁", "💊", "🏠", "💻", "📞", "✈️", "📚", "🎯",
-  "💰", "🔧", "🎨", "🧪", "📝", "🏋️", "🎵", "🍽️",
-  "🚗", "🌱", "⭐", "🔥",
-];
-
 const COLOR_PALETTE = [
   "#3b82f6", "#10b981", "#8b5cf6", "#f59e0b",
   "#f43f5e", "#06b6d4", "#d946ef", "#84cc16",
@@ -48,30 +42,8 @@ export function ProjectChipEditor({
       style={style}
       className="w-52 p-2.5"
     >
-      <div className="mb-2 text-xs font-medium text-[var(--muted)]">Emoji</div>
-      <div className="grid grid-cols-5 gap-1">
-        {EMOJI_PALETTE.map((emoji) => (
-          <button
-            key={emoji}
-            type="button"
-            onClick={() => {
-              bump();
-              void upsert(name, { emoji });
-            }}
-            className={[
-              "flex h-9 w-9 items-center justify-center rounded text-lg",
-              config.emoji === emoji
-                ? "bg-[var(--primary)]/10 ring-1 ring-[var(--primary)]"
-                : "hover:bg-[var(--surface-2)]",
-            ].join(" ")}
-          >
-            {emoji}
-          </button>
-        ))}
-      </div>
-
-      <div className="mb-2 mt-3 text-xs font-medium text-[var(--muted)]">Color</div>
-      <div className="flex gap-1.5">
+      <div className="mb-2 text-xs font-medium text-[var(--muted)]">Color</div>
+      <div className="grid grid-cols-8 gap-1.5">
         {COLOR_PALETTE.map((color) => (
           <button
             key={color}
@@ -81,7 +53,7 @@ export function ProjectChipEditor({
               void upsert(name, { color });
             }}
             className={[
-              "h-7 w-7 rounded-full border-2",
+              "aspect-square w-full rounded-full border-2",
               config.color === color ? "border-[var(--fg)]" : "border-transparent",
             ].join(" ")}
             style={{ backgroundColor: color }}

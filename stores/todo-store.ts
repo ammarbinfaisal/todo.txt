@@ -104,7 +104,23 @@ export const useTodoStore = create<TodoState>()(
         s.error = undefined;
       });
       try {
-        const todos = await dbGetAllTodos();
+        const raw = await dbGetAllTodos();
+        const opts = prefixOpts();
+        // Re-derive internal fields from DSL line (source of truth)
+        const todos = raw.map((t) => {
+          const parsed = parseTodoLine(t.line, opts);
+          return {
+            ...t,
+            completed: parsed.completed,
+            completionDate: parsed.completionDate,
+            priority: parsed.priority,
+            creationDate: parsed.creationDate,
+            text: parsed.text,
+            projects: parsed.projects,
+            contexts: parsed.contexts,
+            meta: parsed.meta,
+          };
+        });
         todos.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
         set((s) => {
           s.todos = todos;
