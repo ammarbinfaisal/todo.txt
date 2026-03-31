@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { AppHeader } from "@/components/AppHeader";
 import { ArcMenu, type ArcAction } from "@/components/ArcMenu";
@@ -70,6 +70,7 @@ export function TodoApp() {
     x: number;
     y: number;
   } | null>(null);
+  const justClosedArcRef = useRef<string | null>(null);
 
   // Inline edit state
   const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
@@ -213,6 +214,7 @@ export function TodoApp() {
                 editing={editingTodoId === todo.id}
                 editDraft={editingTodoId === todo.id ? editDraft : ""}
                 onTap={(e) => {
+                  if (justClosedArcRef.current === todo.id) return;
                   setArcMenu({
                     todoId: todo.id,
                     x: e.clientX,
@@ -244,7 +246,13 @@ export function TodoApp() {
         open={!!arcMenu}
         position={arcMenu ?? { x: 0, y: 0 }}
         onAction={handleArcAction}
-        onClose={() => setArcMenu(null)}
+        onClose={() => {
+          justClosedArcRef.current = arcMenu?.todoId ?? null;
+          setArcMenu(null);
+          requestAnimationFrame(() => {
+            justClosedArcRef.current = null;
+          });
+        }}
       />
 
       {/* Tag Picker Popover */}

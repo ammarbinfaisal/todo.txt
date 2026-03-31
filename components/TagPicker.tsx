@@ -1,8 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { Check } from "lucide-react";
 import { Popover } from "@/components/Popover";
 import { useProjectStore } from "@/stores/project-store";
+import { useTodoStore } from "@/stores/todo-store";
 import { bump } from "@/lib/haptics";
 import type { CSSProperties, RefObject } from "react";
 
@@ -23,10 +25,16 @@ export function TagPicker({
 }) {
   const configs = useProjectStore((s) => s.configs);
   const getConfig = useProjectStore((s) => s.getConfig);
+  const todos = useTodoStore((s) => s.todos);
 
-  const allProjects = Object.keys(configs);
-  const extraProjects = currentProjects.filter((p) => !allProjects.includes(p));
-  const projectList = [...allProjects, ...extraProjects];
+  const projectList = useMemo(() => {
+    const seen = new Set<string>(Object.keys(configs));
+    for (const t of todos) {
+      for (const p of t.projects) seen.add(p);
+    }
+    for (const p of currentProjects) seen.add(p);
+    return [...seen];
+  }, [configs, todos, currentProjects]);
   const currentSet = new Set(currentProjects);
 
   return (

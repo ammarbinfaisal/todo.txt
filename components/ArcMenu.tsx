@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Check, Pencil, Tag, Trash2 } from "lucide-react";
 import { useEscapeKey } from "@/hooks/useEscapeKey";
@@ -57,11 +57,25 @@ export function ArcMenu({
   }
   prevOpen.current = open;
 
+  const menuRef = useRef<HTMLDivElement>(null);
+
   const handleClose = useCallback(() => {
     if (open) onClose();
   }, [open, onClose]);
 
   useEscapeKey(handleClose);
+
+  // Close on outside pointerdown (replaces backdrop overlay)
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: PointerEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("pointerdown", handler);
+    return () => document.removeEventListener("pointerdown", handler);
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -73,11 +87,7 @@ export function ArcMenu({
   return createPortal(
     <>
       <div
-        className="fixed inset-0 z-[99]"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div
+        ref={menuRef}
         className="fixed z-[100]"
         style={{ top: oy, left: ox }}
         role="menu"

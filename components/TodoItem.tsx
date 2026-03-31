@@ -221,7 +221,7 @@ export function TodoItem({
               <span
                 className={[
                   "min-w-0 truncate whitespace-nowrap text-base leading-6",
-                  todo.completed || selected ? "line-through text-[var(--muted)]" : "",
+                  todo.completed ? "line-through text-[var(--muted)]" : "",
                 ].join(" ")}
               >
                 {todo.text || todo.line}
