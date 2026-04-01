@@ -214,7 +214,14 @@ export function TodoApp() {
         }}
       />
 
-      <section className="relative flex-1 overflow-y-auto">
+      <section
+        className="relative flex-1 overflow-y-auto"
+        onClick={(e) => {
+          if (batch.selectMode && !(e.target as HTMLElement).closest("li")) {
+            batch.exit();
+          }
+        }}
+      >
         {error && (
           <div className="px-4 py-3 text-sm text-red-700">{error}</div>
         )}
