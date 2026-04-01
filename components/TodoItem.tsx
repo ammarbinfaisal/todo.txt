@@ -1,13 +1,22 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import type { MouseEvent } from "react";
-import { Check, Circle } from "lucide-react";
+import { Check, Circle, Pencil, Tag, Trash2 } from "lucide-react";
 import type { Todo } from "@/types/todo";
 import { useSwipeRow } from "@/hooks/useSwipeRow";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { useProjectStore } from "@/stores/project-store";
 import { bump } from "@/lib/haptics";
+import type { SwipeAction } from "@/types/settings";
+
+const SWIPE_REVEAL: Record<SwipeAction, { bg: string; fg: string; icon: typeof Check }> = {
+  complete: { bg: "bg-emerald-500/15", fg: "text-emerald-700", icon: Check },
+  delete: { bg: "bg-red-500/15", fg: "text-red-600", icon: Trash2 },
+  edit: { bg: "bg-blue-500/15", fg: "text-blue-600", icon: Pencil },
+  tag: { bg: "bg-violet-500/15", fg: "text-violet-600", icon: Tag },
+  none: { bg: "", fg: "", icon: Check },
+};
 
 export function TodoItem({
   todo,
@@ -23,6 +32,10 @@ export function TodoItem({
   onEditChange,
   onEditSave,
   onEditCancel,
+  onSwipeLeft,
+  onSwipeRight,
+  swipeLeftAction,
+  swipeRightAction,
 }: {
   todo: Todo;
   selected: boolean;
@@ -37,15 +50,20 @@ export function TodoItem({
   onEditChange: (value: string) => void;
   onEditSave: () => void;
   onEditCancel: () => void;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
+  swipeLeftAction: SwipeAction;
+  swipeRightAction: SwipeAction;
 }) {
-  const configs = useProjectStore((s) => s.configs);
   const getConfig = useProjectStore((s) => s.getConfig);
 
   const swipe = useSwipeRow({
-    onSwipeRight: () => {
-      bump();
-      onToggle();
-    },
+    onSwipeRight: onSwipeRight
+      ? () => { bump(); onSwipeRight(); }
+      : undefined,
+    onSwipeLeft: onSwipeLeft
+      ? () => { bump(); onSwipeLeft(); }
+      : undefined,
   });
 
   const hasProjects = todo.projects.length > 0;
@@ -132,12 +150,26 @@ export function TodoItem({
         .filter(Boolean)
         .join(" ")}
     >
-      {/* Swipe reveal */}
-      <div className="absolute inset-0 flex">
-        <div className="flex w-full items-center bg-emerald-500/15 px-4 text-emerald-700">
-          <Check size={18} />
-        </div>
-      </div>
+      {/* Swipe reveal — right swipe (left side) */}
+      {swipeRightAction !== "none" && (() => {
+        const r = SWIPE_REVEAL[swipeRightAction];
+        const Icon = r.icon;
+        return (
+          <div className={`absolute inset-y-0 left-0 right-1/2 flex items-center px-4 ${r.bg} ${r.fg}`}>
+            <Icon size={18} />
+          </div>
+        );
+      })()}
+      {/* Swipe reveal — left swipe (right side) */}
+      {swipeLeftAction !== "none" && (() => {
+        const r = SWIPE_REVEAL[swipeLeftAction];
+        const Icon = r.icon;
+        return (
+          <div className={`absolute inset-y-0 left-1/2 right-0 flex items-center justify-end px-4 ${r.bg} ${r.fg}`}>
+            <Icon size={18} />
+          </div>
+        );
+      })()}
 
       <div
         onPointerDown={handlePointerDown}

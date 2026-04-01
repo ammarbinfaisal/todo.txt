@@ -25,6 +25,7 @@ import { useProjectStore } from "@/stores/project-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useThemeStore } from "@/stores/theme-store";
 import { selectFilteredTodos, useTodoStore } from "@/stores/todo-store";
+import type { SwipeAction } from "@/types/settings";
 
 export function TodoApp() {
   const [input, setInput] = useState("");
@@ -63,6 +64,7 @@ export function TodoApp() {
 
   // Settings
   const loadSettings = useSettingsStore((s) => s.load);
+  const swipeSettings = useSettingsStore((s) => s.swipe);
 
   // Arc menu state
   const [arcMenu, setArcMenu] = useState<{
@@ -165,6 +167,27 @@ export function TodoApp() {
     setEditDraft("");
   };
 
+  const resolveSwipeAction = (todoId: string, action: SwipeAction): (() => void) | undefined => {
+    if (action === "none") return undefined;
+    switch (action) {
+      case "complete":
+        return () => void toggleCompleted(todoId);
+      case "delete":
+        return () => { heavy(); void remove(todoId); };
+      case "edit": {
+        const todo = allTodos.find((t) => t.id === todoId);
+        return todo
+          ? () => { setEditingTodoId(todoId); setEditDraft(todo.line); }
+          : undefined;
+      }
+      case "tag":
+        return () => {
+          setTagPickerTodoId(todoId);
+          tagPicker.open({ clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 });
+        };
+    }
+  };
+
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader
@@ -235,6 +258,10 @@ export function TodoApp() {
                 onEditChange={setEditDraft}
                 onEditSave={handleEditSave}
                 onEditCancel={handleEditCancel}
+                swipeLeftAction={swipeSettings.leftAction}
+                swipeRightAction={swipeSettings.rightAction}
+                onSwipeLeft={resolveSwipeAction(todo.id, swipeSettings.leftAction)}
+                onSwipeRight={resolveSwipeAction(todo.id, swipeSettings.rightAction)}
               />
             ))}
           </ul>

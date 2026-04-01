@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 import { dbGetSettings, dbPutSettings } from "@/lib/db";
-import { DEFAULT_SETTINGS, type AppSettings } from "@/types/settings";
+import { DEFAULT_SETTINGS, DEFAULT_SWIPE, type AppSettings } from "@/types/settings";
 
 interface SettingsState extends AppSettings {
   loaded: boolean;
@@ -26,6 +26,7 @@ export const useSettingsStore = create<SettingsState>()(
           s.projectPrefix = saved.projectPrefix ?? DEFAULT_SETTINGS.projectPrefix;
           s.contextPrefix = saved.contextPrefix ?? DEFAULT_SETTINGS.contextPrefix;
           s.shortcuts = { ...DEFAULT_SETTINGS.shortcuts, ...saved.shortcuts };
+          s.swipe = { ...DEFAULT_SWIPE, ...saved.swipe };
           s.loaded = true;
         });
       } else {
@@ -40,14 +41,15 @@ export const useSettingsStore = create<SettingsState>()(
         if (partial.projectPrefix !== undefined) s.projectPrefix = partial.projectPrefix;
         if (partial.contextPrefix !== undefined) s.contextPrefix = partial.contextPrefix;
         if (partial.shortcuts) s.shortcuts = { ...s.shortcuts, ...partial.shortcuts };
+        if (partial.swipe) s.swipe = { ...s.swipe, ...partial.swipe };
       });
-      const { projectPrefix, contextPrefix, shortcuts } = get();
-      await dbPutSettings({ projectPrefix, contextPrefix, shortcuts });
+      const { projectPrefix, contextPrefix, shortcuts, swipe } = get();
+      await dbPutSettings({ projectPrefix, contextPrefix, shortcuts, swipe });
     },
 
     exportJson: () => {
-      const { projectPrefix, contextPrefix, shortcuts } = get();
-      return JSON.stringify({ projectPrefix, contextPrefix, shortcuts }, null, 2);
+      const { projectPrefix, contextPrefix, shortcuts, swipe } = get();
+      return JSON.stringify({ projectPrefix, contextPrefix, shortcuts, swipe }, null, 2);
     },
 
     importJson: async (json) => {
@@ -62,6 +64,16 @@ export const useSettingsStore = create<SettingsState>()(
             if (typeof v === "string" && k in DEFAULT_SETTINGS.shortcuts) {
               (merged.shortcuts as unknown as Record<string, string>)[k] = v;
             }
+          }
+        }
+        if (parsed.swipe && typeof parsed.swipe === "object") {
+          merged.swipe = { ...get().swipe };
+          const validActions = ["complete", "delete", "edit", "tag", "none"];
+          if (typeof parsed.swipe.leftAction === "string" && validActions.includes(parsed.swipe.leftAction)) {
+            merged.swipe.leftAction = parsed.swipe.leftAction;
+          }
+          if (typeof parsed.swipe.rightAction === "string" && validActions.includes(parsed.swipe.rightAction)) {
+            merged.swipe.rightAction = parsed.swipe.rightAction;
           }
         }
         await get().update(merged);

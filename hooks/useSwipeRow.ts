@@ -10,10 +10,12 @@ function clamp(value: number, min: number, max: number) {
 
 export function useSwipeRow({
   onSwipeRight,
+  onSwipeLeft,
   threshold = 80,
   max = 140,
 }: {
-  onSwipeRight: () => void;
+  onSwipeRight?: () => void;
+  onSwipeLeft?: () => void;
   threshold?: number;
   max?: number;
 }) {
@@ -68,27 +70,30 @@ export function useSwipeRow({
       didSwipe.current = true;
       e.preventDefault();
 
-      // Right swipe only — clamp left at 0
-      const clamped = clamp(dx, 0, max);
+      // Clamp based on enabled directions
+      const minX = onSwipeLeft ? -max : 0;
+      const maxX = onSwipeRight ? max : 0;
+      const clamped = clamp(dx, minX, maxX);
       setX(clamped);
 
-      // Haptic tick when crossing threshold
-      if (clamped >= threshold && !crossedThreshold.current) {
+      // Haptic tick when crossing threshold in either direction
+      const abs = Math.abs(clamped);
+      if (abs >= threshold && !crossedThreshold.current) {
         crossedThreshold.current = true;
         tick();
-      } else if (clamped < threshold && crossedThreshold.current) {
+      } else if (abs < threshold && crossedThreshold.current) {
         crossedThreshold.current = false;
       }
     },
-    [max, threshold]
+    [max, threshold, onSwipeRight, onSwipeLeft]
   );
 
   const finish = useCallback(() => {
     const dx = x;
-    const shouldFire = dx >= threshold;
     reset();
-    if (shouldFire) onSwipeRight();
-  }, [x, threshold, onSwipeRight, reset]);
+    if (dx >= threshold && onSwipeRight) onSwipeRight();
+    else if (dx <= -threshold && onSwipeLeft) onSwipeLeft();
+  }, [x, threshold, onSwipeRight, onSwipeLeft, reset]);
 
   const onPointerUp = useCallback(() => {
     if (!dragging.current) return;

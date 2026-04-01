@@ -6,7 +6,12 @@ import Link from "next/link";
 import { useMountEffect } from "@/hooks/useMountEffect";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useThemeStore, type Theme } from "@/stores/theme-store";
-import { formatShortcut, type KeyboardShortcuts } from "@/types/settings";
+import {
+  formatShortcut,
+  SWIPE_ACTION_LABELS,
+  type KeyboardShortcuts,
+  type SwipeAction,
+} from "@/types/settings";
 
 const THEMES: { key: Theme; icon: typeof Sun; label: string }[] = [
   { key: "light", icon: Sun, label: "Light" },
@@ -86,6 +91,7 @@ export function SettingsPage() {
   const projectPrefix = useSettingsStore((s) => s.projectPrefix);
   const contextPrefix = useSettingsStore((s) => s.contextPrefix);
   const shortcuts = useSettingsStore((s) => s.shortcuts);
+  const swipe = useSettingsStore((s) => s.swipe);
   const updateSettings = useSettingsStore((s) => s.update);
   const loadSettings = useSettingsStore((s) => s.load);
   const exportJson = useSettingsStore((s) => s.exportJson);
@@ -211,6 +217,40 @@ export function SettingsPage() {
           <p className="mt-2 text-xs text-[var(--muted)]">
             Click a shortcut, then press the new key combo. Tab accepts autocomplete in the input.
           </p>
+        </section>
+
+        {/* Swipe Gestures */}
+        <section>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
+            Swipe Gestures
+          </h2>
+          <div className="space-y-2">
+            {(["rightAction", "leftAction"] as const).map((dir) => (
+              <div
+                key={dir}
+                className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
+              >
+                <span className="text-sm">
+                  {dir === "rightAction" ? "Swipe right" : "Swipe left"}
+                </span>
+                <select
+                  value={swipe[dir]}
+                  onChange={(e) => {
+                    void updateSettings({
+                      swipe: { ...swipe, [dir]: e.target.value as SwipeAction },
+                    });
+                  }}
+                  className="rounded border border-[var(--border)] bg-[var(--bg)] px-2 py-1 text-sm text-[var(--fg)]"
+                >
+                  {(Object.keys(SWIPE_ACTION_LABELS) as SwipeAction[]).map((a) => (
+                    <option key={a} value={a}>
+                      {SWIPE_ACTION_LABELS[a]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* Theme */}

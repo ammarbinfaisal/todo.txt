@@ -5,10 +5,18 @@ export interface KeyboardShortcuts {
   newTodo: string;
 }
 
+export type SwipeAction = "complete" | "delete" | "edit" | "tag" | "none";
+
+export interface SwipeSettings {
+  leftAction: SwipeAction;
+  rightAction: SwipeAction;
+}
+
 export interface AppSettings {
   projectPrefix: string;
   contextPrefix: string;
   shortcuts: KeyboardShortcuts;
+  swipe: SwipeSettings;
 }
 
 export const DEFAULT_SHORTCUTS: KeyboardShortcuts = {
@@ -18,10 +26,24 @@ export const DEFAULT_SHORTCUTS: KeyboardShortcuts = {
   newTodo: "mod+n",
 };
 
+export const DEFAULT_SWIPE: SwipeSettings = {
+  leftAction: "delete",
+  rightAction: "complete",
+};
+
 export const DEFAULT_SETTINGS: AppSettings = {
   projectPrefix: "+",
   contextPrefix: "@",
   shortcuts: DEFAULT_SHORTCUTS,
+  swipe: DEFAULT_SWIPE,
+};
+
+export const SWIPE_ACTION_LABELS: Record<SwipeAction, string> = {
+  complete: "Complete",
+  delete: "Delete",
+  edit: "Edit",
+  tag: "Tag",
+  none: "None",
 };
 
 /** Human-readable label for a shortcut key */
