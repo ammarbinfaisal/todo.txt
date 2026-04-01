@@ -237,6 +237,7 @@ export function TodoItem({
                 value={editDraft}
                 enterKeyHint="done"
                 onChange={(e) => onEditChange(e.target.value)}
+                onBlur={() => onEditSave()}
                 onKeyDown={(e) => {
                   if (e.key === "Escape") {
                     e.preventDefault();
