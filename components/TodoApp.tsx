@@ -174,12 +174,11 @@ export function TodoApp() {
         return () => void toggleCompleted(todoId);
       case "delete":
         return () => { heavy(); void remove(todoId); };
-      case "edit": {
-        const todo = allTodos.find((t) => t.id === todoId);
-        return todo
-          ? () => { setEditingTodoId(todoId); setEditDraft(todo.line); }
-          : undefined;
-      }
+      case "edit":
+        return () => {
+          const current = useTodoStore.getState().todos.find((t) => t.id === todoId);
+          if (current) { setEditingTodoId(todoId); setEditDraft(current.line); }
+        };
       case "tag":
         return () => {
           setTagPickerTodoId(todoId);
