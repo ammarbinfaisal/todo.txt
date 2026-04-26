@@ -5,6 +5,7 @@ import { immer } from "zustand/middleware/immer";
 
 import { dbDeleteTodo, dbGetAllTodos, dbPutTodo } from "@/lib/db";
 import { applyRedo, applyUndo } from "@/lib/history-actions";
+import { randomId } from "@/lib/id";
 import { parseTodoLine, serializeTodoLine, type ParseOptions, type SerializeOptions } from "@/lib/todo-parser";
 import { useHistoryStore } from "@/stores/history-store";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -55,7 +56,7 @@ function createTodoFromLine(line: string): Todo {
   const normalizedLine = serializeTodoLine(parsed, opts);
   const timestamp = nowIso();
   return {
-    id: crypto.randomUUID(),
+    id: randomId(),
     line: normalizedLine,
     completed: parsed.completed,
     completionDate: parsed.completionDate,
