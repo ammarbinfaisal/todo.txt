@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode, RefObject } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useEscapeKey } from "@/hooks/useEscapeKey";
 
@@ -14,7 +14,7 @@ export function Popover({
 }: {
   open: boolean;
   onClose: () => void;
-  popoverRef: RefObject<HTMLDivElement | null>;
+  popoverRef: (node: HTMLDivElement | null) => void;
   style: CSSProperties;
   children: ReactNode;
   className?: string;

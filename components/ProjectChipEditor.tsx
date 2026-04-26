@@ -5,7 +5,7 @@ import { useProjectStore } from "@/stores/project-store";
 import { Popover } from "@/components/Popover";
 import { usePopover } from "@/hooks/usePopover";
 import { bump } from "@/lib/haptics";
-import type { CSSProperties, RefObject } from "react";
+import type { CSSProperties } from "react";
 
 const COLOR_PALETTE = [
   "#3b82f6", "#10b981", "#8b5cf6", "#f59e0b",
@@ -22,7 +22,7 @@ export function ProjectChipEditor({
   name: string;
   open: boolean;
   onClose: () => void;
-  popoverRef: RefObject<HTMLDivElement | null>;
+  popoverRef: (node: HTMLDivElement | null) => void;
   style: CSSProperties;
 }) {
   // Subscribe to configs so re-renders happen when config changes

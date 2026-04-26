@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useRef, useState, useLayoutEffect } from "react";
-import type { CSSProperties, RefObject } from "react";
+import { useCallback, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 
 interface PopoverPosition {
   x: number;
@@ -13,7 +13,7 @@ interface PopoverState {
   position: PopoverPosition;
   open: (e: { clientX: number; clientY: number }) => void;
   close: () => void;
-  popoverRef: RefObject<HTMLDivElement | null>;
+  popoverRef: (node: HTMLDivElement | null) => void;
   style: CSSProperties;
 }
 
@@ -23,7 +23,10 @@ export function usePopover(): PopoverState {
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState<PopoverPosition>({ x: 0, y: 0 });
   const [clamped, setClamped] = useState<{ top: number; left: number } | null>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
+
+  // Track the latest desired anchor without re-running the ref callback.
+  const positionRef = useRef<PopoverPosition>({ x: 0, y: 0 });
+  positionRef.current = position;
 
   const open = useCallback((e: { clientX: number; clientY: number }) => {
     setPosition({ x: e.clientX, y: e.clientY });
@@ -35,23 +38,28 @@ export function usePopover(): PopoverState {
     setIsOpen(false);
   }, []);
 
-  useLayoutEffect(() => {
-    if (!isOpen || !popoverRef.current) return;
-    const el = popoverRef.current;
-    const rect = el.getBoundingClientRect();
+  // Callback ref: React calls this synchronously after mount, replacing the
+  // useLayoutEffect that previously measured the popover. When the node mounts
+  // we measure once and clamp into the viewport; when it unmounts we reset.
+  const popoverRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node) {
+      setClamped(null);
+      return;
+    }
+    const rect = node.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+    const { x, y } = positionRef.current;
 
-    let left = position.x;
-    let top = position.y;
-
+    let left = x;
+    let top = y;
     if (left + rect.width > vw - MARGIN) left = vw - rect.width - MARGIN;
     if (left < MARGIN) left = MARGIN;
-    if (top + rect.height > vh - MARGIN) top = position.y - rect.height - MARGIN;
+    if (top + rect.height > vh - MARGIN) top = y - rect.height - MARGIN;
     if (top < MARGIN) top = MARGIN;
 
     setClamped({ top, left });
-  }, [isOpen, position]);
+  }, []);
 
   const style: CSSProperties = isOpen
     ? {

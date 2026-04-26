@@ -2,13 +2,76 @@
 
 import { useCallback, useRef } from "react";
 import type { MouseEvent } from "react";
-import { Check, Circle, Pencil, Tag, Trash2 } from "lucide-react";
-import type { Todo } from "@/types/todo";
+import { CalendarClock, Check, Circle, Clock, Pencil, Tag, Trash2 } from "lucide-react";
+import type { Todo, TodoMeta } from "@/types/todo";
 import { useSwipeRow } from "@/hooks/useSwipeRow";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { useProjectStore } from "@/stores/project-store";
 import { bump } from "@/lib/haptics";
 import type { SwipeAction } from "@/types/settings";
+
+const DAY_MS = 86_400_000;
+
+function parseDateLocal(iso: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function formatRelativeDay(iso: string): { label: string; overdue: boolean } | null {
+  const target = parseDateLocal(iso);
+  if (!target) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((target.getTime() - today.getTime()) / DAY_MS);
+  if (diffDays < 0) {
+    const n = -diffDays;
+    return { label: n === 1 ? "overdue 1d" : `overdue ${n}d`, overdue: true };
+  }
+  if (diffDays === 0) return { label: "today", overdue: false };
+  if (diffDays === 1) return { label: "tomorrow", overdue: false };
+  if (diffDays < 7) return { label: `in ${diffDays}d`, overdue: false };
+  return { label: iso, overdue: false };
+}
+
+function MetaLine({ contexts, meta }: { contexts: string[]; meta: TodoMeta }) {
+  const due = meta.due ? formatRelativeDay(meta.due) : null;
+  const threshold = meta.t ? formatRelativeDay(meta.t) : null;
+  const otherMeta = Object.entries(meta).filter(([k]) => k !== "due" && k !== "t");
+
+  return (
+    <div className="mt-0.5 flex min-w-0 items-center gap-2 truncate text-xs leading-4 text-[var(--muted)]">
+      {due && (
+        <span
+          className={[
+            "inline-flex items-center gap-1",
+            due.overdue ? "text-[var(--priority-a)]" : "",
+          ].join(" ")}
+        >
+          <Clock size={11} />
+          {due.label}
+        </span>
+      )}
+      {threshold && (
+        <span className="inline-flex items-center gap-1">
+          <CalendarClock size={11} />
+          {threshold.label}
+        </span>
+      )}
+      {contexts.length > 0 && (
+        <span className="truncate">
+          {contexts.map((c) => `@${c}`).join(" ")}
+        </span>
+      )}
+      {otherMeta.length > 0 && (
+        <span className="truncate">
+          {otherMeta.map(([k, v]) => `${k}:${v}`).join(" ")}
+        </span>
+      )}
+    </div>
+  );
+}
 
 const SWIPE_REVEAL: Record<SwipeAction, { bg: string; fg: string; icon: typeof Check }> = {
   complete: { bg: "bg-emerald-500/15", fg: "text-emerald-700", icon: Check },
@@ -73,40 +136,49 @@ export function TodoItem({
   // Long press detection with proper tap suppression
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFired = useRef(false);
+  const pressStart = useRef<{ x: number; y: number } | null>(null);
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (editing) return; // Don't start swipe/longpress while editing
     swipe.bind.onPointerDown(e);
     longPressFired.current = false;
+    pressStart.current = { x: e.clientX, y: e.clientY };
     longPressTimer.current = setTimeout(() => {
       longPressFired.current = true;
+      longPressTimer.current = null;
       onLongPress();
-    }, 300);
+    }, 400);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (editing) return;
     swipe.bind.onPointerMove(e);
-    if (longPressTimer.current && Math.abs(e.movementX) + Math.abs(e.movementY) > 4) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
+    // Cancel long-press as soon as cumulative movement crosses the slop threshold.
+    // movementX/Y is per-event delta and underreports slow drags; use absolute distance instead.
+    if (longPressTimer.current && pressStart.current) {
+      const dx = e.clientX - pressStart.current.x;
+      const dy = e.clientY - pressStart.current.y;
+      if (dx * dx + dy * dy > 64) cancelLongPress(); // 8px radius
     }
   };
 
   const handlePointerUp = () => {
     if (editing) return;
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
+    cancelLongPress();
+    pressStart.current = null;
     swipe.bind.onPointerUp();
   };
 
   const handlePointerCancel = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
+    cancelLongPress();
+    pressStart.current = null;
     swipe.bind.onPointerCancel();
   };
 
@@ -180,6 +252,7 @@ export function TodoItem({
         style={{
           transform: `translateX(${swipe.x}px)`,
           transition: swipe.active ? undefined : "transform 150ms ease-out",
+          touchAction: "pan-y",
         }}
         className={[
           "relative flex items-center gap-1.5 bg-[var(--bg)] px-2 py-1.5 md:gap-2 md:px-3",
@@ -249,17 +322,23 @@ export function TodoItem({
               />
             </form>
           ) : (
-            <div className="flex items-center gap-1.5">
-              <PriorityBadge priority={todo.priority} />
-              <span
-                className={[
-                  "min-w-0 truncate whitespace-nowrap text-base leading-6",
-                  todo.completed ? "line-through text-[var(--muted)]" : "",
-                ].join(" ")}
-              >
-                {todo.text || todo.line}
-              </span>
-            </div>
+            <>
+              <div className="flex items-center gap-1.5">
+                <PriorityBadge priority={todo.priority} />
+                <span
+                  className={[
+                    "min-w-0 truncate whitespace-nowrap text-base leading-6",
+                    todo.completed ? "line-through text-[var(--muted)]" : "",
+                  ].join(" ")}
+                >
+                  {todo.text || todo.line}
+                </span>
+              </div>
+              {!todo.completed &&
+                (todo.contexts.length > 0 || Object.keys(todo.meta).length > 0) && (
+                  <MetaLine contexts={todo.contexts} meta={todo.meta} />
+                )}
+            </>
           )}
         </div>
 

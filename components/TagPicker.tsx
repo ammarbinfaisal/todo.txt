@@ -6,7 +6,7 @@ import { Popover } from "@/components/Popover";
 import { useProjectStore } from "@/stores/project-store";
 import { useTodoStore } from "@/stores/todo-store";
 import { bump } from "@/lib/haptics";
-import type { CSSProperties, RefObject } from "react";
+import type { CSSProperties } from "react";
 
 export function TagPicker({
   open,
@@ -20,7 +20,7 @@ export function TagPicker({
   currentProjects: string[];
   onToggleProject: (name: string) => void;
   onClose: () => void;
-  popoverRef: RefObject<HTMLDivElement | null>;
+  popoverRef: (node: HTMLDivElement | null) => void;
   style: CSSProperties;
 }) {
   const configs = useProjectStore((s) => s.configs);

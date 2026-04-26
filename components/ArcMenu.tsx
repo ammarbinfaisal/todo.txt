@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Check, Pencil, Tag, Trash2 } from "lucide-react";
 import { useEscapeKey } from "@/hooks/useEscapeKey";
+import { useMountEffect } from "@/hooks/useMountEffect";
 import { tick } from "@/lib/haptics";
 
 export type ArcAction = "complete" | "edit" | "tag" | "delete";
@@ -65,17 +66,24 @@ export function ArcMenu({
 
   useEscapeKey(handleClose);
 
-  // Close on outside pointerdown (replaces backdrop overlay)
-  useEffect(() => {
-    if (!open) return;
+  // Close on outside pointerdown (replaces backdrop overlay).
+  // Listener is registered once on mount and reads latest open/onClose via refs,
+  // so we never call useEffect with reactive deps.
+  const openRef = useRef(open);
+  const onCloseRef = useRef(onClose);
+  openRef.current = open;
+  onCloseRef.current = onClose;
+
+  useMountEffect(() => {
     const handler = (e: PointerEvent) => {
+      if (!openRef.current) return;
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose();
+        onCloseRef.current();
       }
     };
     document.addEventListener("pointerdown", handler);
     return () => document.removeEventListener("pointerdown", handler);
-  }, [open, onClose]);
+  });
 
   if (!open) return null;
 
